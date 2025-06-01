@@ -1,0 +1,30 @@
+---
+# Exclusion de certains dossiers
+exclude_paths:
+  - .cache/
+  - .git/
+  - .pre-commit-config.yaml
+  - inventories/
+  - docker_compose/
+
+skip_list:
+  - yaml[line-length]  # Longueur de ligne
+  # - yaml[truthy]       # Valeurs booléennes
+  # - name[template]     # Noms des tâches
+  # - var-naming[no-role-prefix]  # Préfixe des variables de rôle
+  # - name[casing]       # Casse des noms
+
+# Configuration des warnings vs erreurs
+# warn_list:
+#   - command-instead-of-module  # Utilisation de command/shell au lieu d'un module
+#   - no-changed-when           # Pas de changed_when sur les commandes
+#   - package-latest            # Installation de paquets sans version spécifiée
+
+# Ajustement des paramètres
+# mock_modules:
+#   - docker_compose
+#   - zfs
+
+# Permettre certaines bonnes pratiques modernes
+use_default_rules: true
+verbosity: 0

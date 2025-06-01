@@ -1,0 +1,7 @@
+vault
+pwd.ini
+ssh_keys/*
+.vault_pwd_file
+microserver.code-workspace
+playbooks/vars/sensitive/*
+.DS_Store

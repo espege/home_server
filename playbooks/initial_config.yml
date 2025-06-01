@@ -1,0 +1,14 @@
+---
+
+- name: Playbook testing
+  hosts: ubuntu_unconfigured
+  become: true
+  remote_user: buntuadmin
+
+  vars_files:
+    - vars/sensitive/sensitive_vars.yaml
+
+  tasks:
+    - name: Basic hostconfig
+      ansible.builtin.include_role:
+        name: hostconfig

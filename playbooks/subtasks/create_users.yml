@@ -1,0 +1,40 @@
+---
+- name: Ubuntu | Create groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop:
+    "{{ mandatory_groups | default([]) }}"
+  tags: groups
+
+- name: Linux | Groups | Create all required user groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop: "{{ (sensitive_users + users) | map(attribute='groups') | flatten | unique }}"
+  register:
+    created_users
+
+- name: Linux | Users | Create all required users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.comment | default('Created by ansible')}}"
+    groups: "{{ item.groups }}"
+    append: true
+    shell: "{{ item.shell | default('/bin/bash') }}"
+  loop: "{{ sensitive_users + users }}"
+  register:
+    created_users
+
+- name: Create service user
+  ansible.builtin.user:
+    name: "{{ svc_account.name }}"
+    comment: "{{ svc_account.comment | default('Created by ansible') }}"
+    shell: "{{ svc_account.shell | default('/usr/sbin/nologin') }}"
+    system: true
+    groups: "{{ svc_account.groups | default(omit) }}"
+    state: "{{ svc_account.state | default('present') }}"
+  loop:
+    "{{ svc_accounts.values() | list }}"
+  loop_control:
+    label: "{{ svc_account.name }}"
+    loop_var: svc_account
+  tags: service_accounts
