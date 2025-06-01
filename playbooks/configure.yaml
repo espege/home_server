@@ -7,7 +7,7 @@
 
   vars_files:
     - vars/networking.yaml
-    - vars/sensitive/linux_sensitive_users.yaml
+    - vars/sensitive/sensitive_users.yaml
     - vars/ufw_rules.yaml
 
   vars:

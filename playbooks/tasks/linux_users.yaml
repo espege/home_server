@@ -19,14 +19,14 @@
     groups: "{{ item.groups }}"
     append: true
     shell: "{{ item.shell | default('/bin/bash') }}"
-  loop: "{{ linux_sensitive_users + users }}"
+  loop: "{{ sensitive_users + users }}"
   register:
     created_users
 
 - name: Linux | Groups | Create all required groups
   ansible.builtin.group:
     name: "{{ item }}"
-  loop: "{{ (linux_sensitive_users + users) | map(attribute='groups') | flatten | unique }}"
+  loop: "{{ (sensitive_users + users) | map(attribute='groups') | flatten | unique }}"
   register:
     created_groups
 

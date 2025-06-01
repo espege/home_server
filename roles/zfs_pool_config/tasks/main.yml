@@ -29,8 +29,6 @@
     tags:
       - always
 
-  - debug: var=zfs_pool_config_shared_directories
-
   - name: Linux | Check folder & permissions in {{ zfs_pool_name }}
     block:
       - name: Linux | Create non-existant folders
