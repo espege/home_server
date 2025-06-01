@@ -1,8 +1,8 @@
 ---
 
 - name: Load users ands groups variables
-  ansible.builtin.include_vars: "{{ playbook_dir }}/vars/{{ vars_file_name }}.yaml"
-  when: vars_file_name is defined and vars_file_name != ""
+  ansible.builtin.include_vars: "{{ playbook_dir }}/vars/{{ linux_user_vars_file_name }}.yaml"
+  when: linux_user_vars_file_name is defined and linux_user_vars_file_name != ""
 
 - name: Assert Mandatory variables
   ansible.builtin.assert:

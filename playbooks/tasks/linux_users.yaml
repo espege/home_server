@@ -34,9 +34,9 @@
   ansible.builtin.include_role:
     name: linux_user
   vars:
-    - linux_user_default_login_shell: "/usr/sbin/nologin"
-    - linux_user_system_user: true
-    - vars_file_name: "{{ 'docker_' + docker_app }}"
+    linux_user_default_login_shell: "/usr/sbin/nologin"
+    linux_user_system_user: true
+    linux_user_vars_file_name: "{{ 'docker_' + docker_app }}"
   loop: "{{ docker_apps | default([]) }}"
   loop_control:
     label: "{{ docker_app }}"

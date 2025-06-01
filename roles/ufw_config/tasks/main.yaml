@@ -19,7 +19,7 @@
         delete: "{{ item.delete | default(omit) }}"
         comment: "{{ item.comment | default(omit) }}"
       loop:
-        "{{ ruleset }}"
+        "{{ ufw_config_ruleset }}"
 
     - name: Enable UFW
       community.general.ufw:

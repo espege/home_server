@@ -27,4 +27,4 @@
           ansible.builtin.include_role:
             name: zfs_pool_config
           vars:
-            zfs_pool_config_shared_directories: "{{ pool_folders | dict2items}}"
+            zfs_pool_config_shared_directories: "{{ pool_folders | dict2items }}"

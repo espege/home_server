@@ -17,27 +17,27 @@
       - qbittorrent
 
   tasks:
-    - name:  Linux | Users | Create users and groups
+    - name: Linux | Users | Create users and groups
       ansible.builtin.include_tasks:
         file: tasks/linux_users.yaml
       tags:
         - users
         - groups
 
-    - name:  Linux | APT | Install packages
+    - name: Linux | APT | Install packages
       ansible.builtin.include_tasks:
         file: tasks/linux_packages.yaml
       tags:
         - packages
 
-    - name:  Linux | ZFS | Storage Pool Config
+    - name: Linux | ZFS | Storage Pool Config
       ansible.builtin.include_tasks:
         file: tasks/linux_zfs.yaml
       tags:
         - zfs
         - storage_pool
 
-    # - name:  Linux | Docker | Configure docker app setups
+    # - name: Linux | Docker | Configure docker app setups
     #   ansible.builtin.import_tasks:
     #     file: "{{ item }}"
     #   loop:
@@ -52,8 +52,8 @@
 
 
     - name: Ubuntu | Firewall | SSH Firewall config
-      include_role:
+      ansible.builtin.include_role:
         name: ufw_config
       vars:
-        ruleset: "{{ ssh_from_local_subnet }}"
+        ufw_config_ruleset: "{{ ssh_from_local_subnet }}"
       tags: firewall

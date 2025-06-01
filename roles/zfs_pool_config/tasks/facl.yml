@@ -11,5 +11,5 @@
       recursive: true
   loop: "{{ outer_item.value.facl | dict2items }}"
   loop_control:
-    label: '{{ outer_item.key }}'
+  label: '{{ outer_item.key }}'
   tags: facl
