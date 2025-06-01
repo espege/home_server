@@ -1,0 +1,26 @@
+---
+
+- name: Load users ands groups variables
+  ansible.builtin.include_vars: "{{ playbook_dir }}/vars/{{ vars_file_name }}.yaml"
+  when: vars_file_name is defined and vars_file_name != ""
+
+- name: Assert Mandatory variables
+  ansible.builtin.assert:
+    that:
+      - users is defined and users | length > 0
+    msg: "Users variable is not defined or empty. Please define 'users' in the vars file or directly in role call."
+
+- name: Linux | Users | Create required user
+  ansible.builtin.user:
+    name: "{{ docker_user.name }}"
+    comment: "{{ docker_user.comment | default('Created by ansible') }}"
+    shell: "{{ docker_user.shell | default(linux_user_default_login_shell) }}"
+    system: "{{ linux_user_system_user }}"
+    groups: "{{ docker_user.groups | default(omit) }}"
+    state: "{{ docker_user.state | default('present') }}"
+  loop: "{{ users }}"
+  loop_control:
+    label: "{{ docker_user.name }}"
+    loop_var: docker_user
+  tags:
+    - service_accounts

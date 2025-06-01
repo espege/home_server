@@ -1,0 +1,12 @@
+---
+- name: Load users ands groups variables
+  ansible.builtin.include_vars:
+    dir: '../vars'
+    files_matching: 'apt_*.'
+
+- name: Linux | APT | Install Packages
+  include_role:
+    name: install_software
+  tags:
+    - apt
+    - packages

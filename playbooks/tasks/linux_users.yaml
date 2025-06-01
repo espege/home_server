@@ -1,0 +1,43 @@
+---
+- name: Load users ands groups variables
+  ansible.builtin.include_vars:
+    dir: '../vars'
+    files_matching: 'linux_*.' # linux_users && linux_groups
+
+- name: Ubuntu | Create groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop:
+    "{{ mandatory_groups | default([]) }}"
+  tags: groups
+
+
+- name: Linux | Users | Create all required users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.comment | default('Created by ansible') }}"
+    groups: "{{ item.groups }}"
+    append: true
+    shell: "{{ item.shell | default('/bin/bash') }}"
+  loop: "{{ linux_sensitive_users + users }}"
+  register:
+    created_users
+
+- name: Linux | Groups | Create all required groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop: "{{ (linux_sensitive_users + users) | map(attribute='groups') | flatten | unique }}"
+  register:
+    created_groups
+
+- name: Linux | Accounts | Create Docker service accounts
+  ansible.builtin.include_role:
+    name: linux_user
+  vars:
+    - linux_user_default_login_shell: "/usr/sbin/nologin"
+    - linux_user_system_user: true
+    - vars_file_name: "{{ 'docker_' + docker_app }}"
+  loop: "{{ docker_apps | default([]) }}"
+  loop_control:
+    label: "{{ docker_app }}"
+    loop_var: docker_app

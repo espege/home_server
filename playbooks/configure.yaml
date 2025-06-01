@@ -1,0 +1,59 @@
+---
+# ansible-playbook playbooks/configure.yaml
+
+- name: Initial Setup
+  hosts: microserver
+  become: true
+
+  vars_files:
+    - vars/networking.yaml
+    - vars/sensitive/linux_sensitive_users.yaml
+    - vars/ufw_rules.yaml
+
+  vars:
+    docker_apps:
+      - plex
+      - onedrive
+      - qbittorrent
+
+  tasks:
+    - name:  Linux | Users | Create users and groups
+      ansible.builtin.include_tasks:
+        file: tasks/linux_users.yaml
+      tags:
+        - users
+        - groups
+
+    - name:  Linux | APT | Install packages
+      ansible.builtin.include_tasks:
+        file: tasks/linux_packages.yaml
+      tags:
+        - packages
+
+    - name:  Linux | ZFS | Storage Pool Config
+      ansible.builtin.include_tasks:
+        file: tasks/linux_zfs.yaml
+      tags:
+        - zfs
+        - storage_pool
+
+    # - name:  Linux | Docker | Configure docker app setups
+    #   ansible.builtin.import_tasks:
+    #     file: "{{ item }}"
+    #   loop:
+    #     - tasks/configure_qbittorrent.yml
+    #     - tasks/configure_onedrive.yml
+    #     - tasks/configure_nordvpn.yml
+    #     - tasks/install_actual_budget.yml
+    #     - tasks/install_actual_budget.yml
+    #   tags:
+    #     - docker_apps
+    #   when: zfs_pool_exists
+
+
+    - name: Ubuntu | Firewall | SSH Firewall config
+      include_role:
+        name: ufw_config
+      vars:
+        ruleset: "{{ ssh_from_local_subnet }}"
+      tags: firewall

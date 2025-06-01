@@ -1,0 +1,15 @@
+# inner loop for facl
+- name: Posix | Set new ACL values
+  ansible.posix.acl:
+      path: /{{ zfs_pool_name }}/{{ outer_item.key }}/
+      entity: "{{ item.value.entity | default('') }}"
+      etype: "{{ item.value.etype }}"
+      permissions: "{{ item.value.permissions }}"
+      default: "{{ item.value.default }}"
+      state: "{{ item.value.state }}"
+      recalculate_mask: "{{ item.value.recalculate_mask | default('default') }}"
+      recursive: true
+  loop: "{{ outer_item.value.facl | dict2items }}"
+  loop_control:
+    label: '{{ outer_item.key }}'
+  tags: facl

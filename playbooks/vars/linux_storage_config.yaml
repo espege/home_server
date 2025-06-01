@@ -1,0 +1,68 @@
+pool_folders:
+  Videos:
+    owner: root
+    group: Media
+    mode: '2770'
+    facl:
+      media:
+        entity: "{{ media_group }}"
+        etype: group
+        state: present
+        permissions: rw
+        default: yes
+
+  Videos/TV:
+    owner: root
+    group: Media
+    mode: '2774'
+
+  Videos/Famille:
+    owner: root
+    group: Media
+    mode: '2774'
+
+  Videos/Films:
+    owner: root
+    group: Media
+    mode: '2774'
+
+  Torrents/complete:
+    owner: qbittorrent-nox
+    group: Media
+    mode: '2770'
+
+  Torrents:
+    owner: qbittorrent-nox
+    group: Media
+    mode: '2770'
+    facl:
+      media:
+        entity: "{{ media_group }}"
+        etype: group
+        state: present
+        permissions: rwx
+        default: true
+
+  Musique:
+    owner: root
+    group: Media
+    mode: '2770'
+
+  Photos:
+    owner: root
+    group: Media
+    mode: '2770'
+    facl:
+      media:
+        entity: "{{ media_group }}"
+        state: present
+        permissions: rw
+        etype: group
+        default: true
+        recalculate_mask: mask
+      mask:
+        etype: mask
+        state: present
+        permissions: rw
+        default: false
+        recalculate_mask: mask

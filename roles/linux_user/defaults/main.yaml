@@ -1,0 +1,2 @@
+linux_user_default_login_shell: /bin/bash
+linux_user_system_user: false

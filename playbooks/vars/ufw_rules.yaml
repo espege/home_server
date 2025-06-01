@@ -1,0 +1,9 @@
+---
+ssh_from_local_subnet:
+  - rule: allow
+    proto: tcp
+    port: 22
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow private subnet SSH
+    delete: no

@@ -1,0 +1,11 @@
+software:
+  - package: 'ufw'
+    check_svc: true
+    repo:
+    useraccount:
+    signed_repo_info:
+  - package: 'smartmontools'
+    check_svc: false
+    repo:
+    useraccount:
+    signed_repo_info:

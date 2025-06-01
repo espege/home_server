@@ -1,0 +1,71 @@
+---
+ # roles/zfs_pool_config/tasks/main.yml
+
+- name: Linux | ZFS | Configure {{ zfs_pool_name }}
+  tags:
+    - zfs
+    - storage_pool
+  block:
+
+  - name: Validate mandatory variables
+    ansible.builtin.assert:
+      that:
+        - zfs_pool_name is defined
+        - zfs_pool_config_shared_directories is defined
+      fail_msg: "zfs_pool_name and zfs_pool_config_shared_directories must be defined in the playbook or inventory."
+    tags:
+      - always
+
+  - name: Debug | Output pool name
+    ansible.builtin.debug:
+      msg: "Excecuting role zfs_pool_config and this is the value of zfs_pool_name {{ zfs_pool_name }}"
+    tags:
+      - always
+
+  - name: Confirm storage pool directory exists
+    ansible.builtin.stat:
+      path: "/{{ zfs_pool_name }}"
+    register: pool_mounted
+    tags:
+      - always
+
+  - debug: var=zfs_pool_config_shared_directories
+
+  - name: Linux | Check folder & permissions in {{ zfs_pool_name }}
+    block:
+      - name: Linux | Create non-existant folders
+        ansible.builtin.file:
+          state: directory
+          path: /{{zfs_pool_name }}/{{ item.key }}
+          owner: "{{ item.value.owner }}"
+          group: "{{ item.value.group }}"
+          mode: "{{ item.value.mode }}"
+          recurse: false
+        loop: "{{ zfs_pool_config_shared_directories }}"
+        loop_control:
+          label: /{{zfs_pool_name }}/{{ item.key }}
+        tags: directories
+
+      - name: Linux | ACL | Configure ZFS ACL type
+        community.general.zfs:
+          name: "{{ zfs_pool_name }}"
+          state: present
+          extra_zfs_properties:
+            acltype: posixacl  # Uses normal Linux
+            xattr: sa         # Store file ACLs in iNode instead of in subfolder
+        tags: zfs
+
+      - name: Ensure acl installed
+        ansible.builtin.apt:
+          name: acl
+
+    #   - name: Linux | Set facl on directories (outer loop)
+    #     ansible.builtin.include_tasks: facl.yml
+    #     loop: "{{ zfs_pool_config_shared_directories }}"
+    #     loop_control:
+    #       label: "{{ outer_item.key }}"
+    #       loop_var: outer_item
+    #     when: outer_item.value.facl is defined
+    #     tags: facl
+
+    # when: pool_mounted.stat.isdir is defined and pool_mounted.stat.isdir

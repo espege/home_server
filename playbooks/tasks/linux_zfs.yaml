@@ -1,0 +1,30 @@
+---
+
+- name: ZFS Testing and Config
+  tags:
+    - zfs
+    - storage_pool
+  block:
+
+    - name: Stat ZFS pool array
+      ansible.builtin.stat:
+        path: /{{ zfs_pool_name }}
+      register: zfs_pool
+      tags:
+        - zfs_stat
+
+    - name: Save zfs_pool status to fact
+      ansible.builtin.set_fact:
+        zfs_pool_exists: "{{ zfs_pool.stat.exists | default(false) }}"
+
+    - name: Configure ZFS pool
+      when: zfs_pool_exists
+      block:
+        - name: Load users ands groups variables
+          ansible.builtin.include_vars: linux_storage_config.yaml
+
+        - name: Call role zfs_pool_config
+          ansible.builtin.include_role:
+            name: zfs_pool_config
+          vars:
+            zfs_pool_config_shared_directories: "{{ pool_folders | dict2items}}"

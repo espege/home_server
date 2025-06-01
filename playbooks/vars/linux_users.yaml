@@ -1,0 +1,10 @@
+---
+users:
+  - ansible:
+    name: ansible
+    comment: "Ansible user for automation"
+    key_path: ssh_keys/home_server_priv.pub
+    groups:
+      - nordvpn
+      - Media
+      - sudo

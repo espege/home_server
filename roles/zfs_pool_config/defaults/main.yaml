@@ -1,0 +1,3 @@
+# roles/zfs_pool_config/defaults/main.yaml
+
+zfs_pool_config_shared_directories: "{{ [] }}"
