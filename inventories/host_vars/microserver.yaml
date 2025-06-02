@@ -1,0 +1,4 @@
+---
+ansible_host: 192.168.0.50
+zfs_pool_name: micropool
+media_group: Media

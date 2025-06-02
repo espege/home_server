@@ -1,4 +1,5 @@
 ---
+# ansible-playbook initial_config.yml -i inventories/inventory_newhost.ini --ask-become-pass --ask-pass
 
 - name: Playbook testing
   hosts: ubuntu_unconfigured
@@ -6,7 +7,7 @@
   remote_user: buntuadmin
 
   vars_files:
-    - vars/sensitive/sensitive_vars.yaml
+    - vars/linux_users.yaml
 
   tasks:
   - name: Ubunutu | Basic config
@@ -14,7 +15,8 @@
     block:
       - name: Linux | Users | Create Ansible
         ansible.builtin.user:
-          name: ansible
+          name: "{{ users.ansible.name }}"
+          comment: "{{ users.ansible.comment }}"
           state: present
           groups: sudo
           createhome: true
@@ -30,7 +32,7 @@
       # Add public key to ansible user home
       - name: Linux | Keys | Add ansible key file
         ansible.posix.authorized_key:
-          user: ansible
+          user: "{{ users.ansible.name }}"
           state: present
-          key: "{{ public_key }}"
+          key: "{{ users.ansible.public_key }}"
         remote_user: ansible
