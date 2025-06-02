@@ -1,0 +1,5 @@
+users:
+  - name: 'qbittorrent-nox'
+    groups:
+      - Media
+    comment: Qbittorent svc account | Created by ansible

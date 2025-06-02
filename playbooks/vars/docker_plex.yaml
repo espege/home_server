@@ -1,0 +1,5 @@
+users:
+  - name: plex
+    groups:
+      - Media
+    comment: Plex Server svc account | Created by ansible
