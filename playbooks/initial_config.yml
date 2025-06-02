@@ -9,6 +9,28 @@
     - vars/sensitive/sensitive_vars.yaml
 
   tasks:
-    - name: Basic hostconfig
-      ansible.builtin.include_role:
-        name: hostconfig
+  - name: Ubunutu | Basic config
+    become: true
+    block:
+      - name: Linux | Users | Create Ansible
+        ansible.builtin.user:
+          name: ansible
+          state: present
+          groups: sudo
+          createhome: true
+          shell: /bin/bash
+
+      - name: Linux | Sudoers | Create ansible sudoers file
+        ansible.builtin.copy:
+          dest: /etc/sudoers.d/ansible
+          content: "ansible ALL=(ALL) NOPASSWD: ALL"
+          mode: '0440'
+          validate: 'visudo -cf %s'
+
+      # Add public key to ansible user home
+      - name: Linux | Keys | Add ansible key file
+        ansible.posix.authorized_key:
+          user: ansible
+          state: present
+          key: "{{ public_key }}"
+        remote_user: ansible
