@@ -1,35 +1,4 @@
 ---
-- name: Load users ands groups variables
-  ansible.builtin.include_vars:
-    dir: '../vars'
-    files_matching: 'linux_*.' # linux_users && linux_groups
-
-- name: Ubuntu | Create groups
-  ansible.builtin.group:
-    name: "{{ item }}"
-  loop:
-    "{{ mandatory_groups | default([]) }}"
-  tags: groups
-
-
-- name: Linux | Users | Create all required users
-  ansible.builtin.user:
-    name: "{{ item.name }}"
-    comment: "{{ item.comment | default('Created by ansible') }}"
-    groups: "{{ item.groups }}"
-    append: true
-    shell: "{{ item.shell | default('/bin/bash') }}"
-  loop: "{{ sensitive_users + users }}"
-  register:
-    created_users
-
-- name: Linux | Groups | Create all required groups
-  ansible.builtin.group:
-    name: "{{ item }}"
-  loop: "{{ (sensitive_users + users) | map(attribute='groups') | flatten | unique }}"
-  register:
-    created_groups
-
 - name: Linux | Accounts | Create Docker service accounts
   ansible.builtin.include_role:
     name: linux_user
@@ -41,3 +10,37 @@
   loop_control:
     label: "{{ docker_app }}"
     loop_var: docker_app
+
+- name: Load users ands groups variables
+  ansible.builtin.include_vars:
+    dir: '../vars'
+    files_matching: 'linux_*.' # linux_users && linux_groups
+- name: Ubuntu | Create extra groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop:
+    "{{ mandatory_groups | default([]) }}"
+  tags: groups
+
+- name: Linux | Users | Create all required users
+  ansible.builtin.user:
+    name: "{{ linux_user.name }}"
+    comment: "{{ linux_user.comment | default('Created by ansible') }}"
+    groups: "{{ linux_user.groups }}"
+    append: true
+    shell: "{{ linux_user.shell | default('/bin/bash') }}"
+  loop: "{{ users.values() }}"
+  loop_control:
+    label: "{{ linux_user.name }}"
+    loop_var: 'linux_user'
+  register:
+    created_users
+  when: users is defined and users | length > 0
+
+- name: Linux | Groups | Create all required groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop: "{{ users.values() | map(attribute='groups') | flatten | unique }}"
+  register:
+    created_groups
+  when: users is defined and users | length > 0
