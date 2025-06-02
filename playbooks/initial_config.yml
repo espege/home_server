@@ -1,5 +1,4 @@
 ---
-# ansible-playbook initial_config.yml -i inventories/inventory_newhost.ini --ask-become-pass --ask-pass
 
 - name: Playbook testing
   hosts: ubuntu_unconfigured
