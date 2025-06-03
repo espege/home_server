@@ -2,7 +2,7 @@
 # ansible-playbook playbooks/configure.yaml
 
 - name: Initial Setup
-  hosts: microserver
+  hosts: homelab
   become: true
 
   vars_files:
