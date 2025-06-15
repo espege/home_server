@@ -1,0 +1,13 @@
+---
+
+- name: Docker Volumes | Create directory {{ docker_volume }}
+  become: true
+  ansible.builtin.file:
+    path: "{{ docker_volume }}"
+    state: 'directory'
+    owner: "{{ bind_vol_owner | default('root') }}"
+    group: "{{ bind_vol_group | default('root') }}"
+    mode: "{{ dir_permissions | default('770') }}"
+  when: not docker_volume | regex_search('^\.[^.]+$') # Volumes don't have a file extension
+  tags:
+    - directories

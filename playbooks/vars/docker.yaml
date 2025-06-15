@@ -1,0 +1,4 @@
+---
+# Reusable variables for all docker deployments
+time_zone: America/Montreal
+preferred_docker_app_path: /src/docker

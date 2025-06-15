@@ -1,0 +1,42 @@
+---
+- name: Docker Compose Generator
+  tags:
+    - docker
+    - docker_compose
+  block:
+
+    - name: Install Docker and Docker Compose
+      ansible.builtin.include_tasks:
+        file: 'install_docker.yaml'
+
+    - name: Create default docker volume bind directory {{ docker_compose_generator_default_bind_path }}
+      ansible.builtin.file:
+        path: "{{ docker_compose_generator_default_bind_path }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Find all folders under docker_apps directory
+      become: false
+      ansible.builtin.find:
+        paths: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}"
+        file_type: directory
+        recurse: false
+      delegate_to: localhost
+      register: docker_apps_folders
+
+    - name: Generate Docker Compose files
+      ansible.builtin.include_tasks:
+        file: 'generate_template.yaml'
+      loop: "{{ docker_apps_folders.files | map(attribute='path') | map('basename') | list | unique }}"
+      loop_control:
+        label: "{{ docker_app }}"
+        loop_var: 'docker_app'
+      tags:
+        - docker_compose
+
+# For all docker apps, create external network if it doesn't exist
+# For all docker apps, move any files to destination
+# Install Portainer only
+# For all docker apps but portainer, move compose files to repo

@@ -15,6 +15,7 @@
   ansible.builtin.include_vars:
     dir: '../vars'
     files_matching: 'linux_*.' # linux_users && linux_groups
+    
 - name: Ubuntu | Create extra groups
   ansible.builtin.group:
     name: "{{ item }}"

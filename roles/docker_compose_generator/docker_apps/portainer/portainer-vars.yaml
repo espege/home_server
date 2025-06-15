@@ -1,0 +1,5 @@
+state: present
+preferred_subnet: '172.31.0.0/16'
+docker_compose_run: true
+public_domain_name: "{{ hostvars[inventory_hostname].public_domain_name }}"
+connect_to_traefik: true

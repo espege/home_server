@@ -1,0 +1,66 @@
+---
+- name: Docker App block for {{ docker_app }}
+  tags: "{{ docker_app }}" # Allows to control which docker compose app to run
+  block:
+
+    - name: Ansible | Set Fact | docker_app_vars_key
+      ansible.builtin.set_fact:
+        docker_app_vars_key: "{{ docker_app }}_vars"
+
+    - name: Include vars for {{ docker_app }}
+      ansible.builtin.include_vars:
+        file: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/{{ docker_app }}-vars.yaml"
+        name: "{{ docker_app_vars_key }}"
+
+    - name: Ansible | Find | .j2 files for {{ docker_app }}
+      ansible.builtin.find:
+        paths: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}"
+        patterns: "*.j2"
+        file_type: file
+        recurse: true
+      register: j2_files
+      become: false
+      delegate_to: localhost
+
+    - name: Ansible | Set Fact | Remote Compose Directory
+      ansible.builtin.set_fact:
+        remote_compose_directory: "{{ docker_app_vars_key.custom_destination | default(docker_compose_generator_default_bind_path) }}"
+        docker_compose_contents: "{{ lookup('ansible.builtin.template', '{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/docker-compose.yaml.j2') | from_yaml }}"
+
+    - name: Ensure remote destination directory exists
+      ansible.builtin.file:
+        state: directory
+        path: "{{ remote_compose_directory }}/{{ docker_app }}"
+
+    - name: Docker Volumes | Create bind mounts
+      ansible.builtin.include_tasks:
+        file: 'generate_bind_volumes.yaml'
+      loop: "{{ docker_compose_contents.services | dict2items | selectattr('value.volumes', 'defined') | map(attribute='value.volumes') | flatten | selectattr('source', 'defined') | map(attribute='source') }}"
+      loop_control:
+        label: "{{ docker_volume }}"
+        loop_var: 'docker_volume'
+
+    - name: Generate templated files | {{ docker_app }}
+      ansible.builtin.template:
+        src: "{{ my_template.path }}"
+        dest: "{{ remote_compose_directory }}/{{ docker_app }}/{{ my_template.path | basename | string | replace('.j2', '') }}"
+        mode: '0644'
+      tags:
+        - docker_compose
+      loop: "{{ j2_files.files }}"
+      loop_control:
+        label: "{{ my_template.path | basename }}"
+        loop_var: my_template
+      register: generated_templates
+
+    - name: Docker | Compose up | Portainer only
+      community.docker.docker_compose_v2:
+        project_src: "{{ item.dest | dirname }}"
+        state: "{{ docker_app_vars_key.state | default('present') }}"
+      loop: "{{ generated_templates.results }}"
+      tags:
+        - compose
+        - docker
+      when:
+        - docker_app == 'portainer'
+        - "'docker-compose' in item.dest"

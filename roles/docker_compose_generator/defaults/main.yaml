@@ -1,0 +1,3 @@
+---
+docker_compose_generator_docker_install_status: true
+docker_compose_generator_default_bind_path: "/opt/docker_compose_generator"

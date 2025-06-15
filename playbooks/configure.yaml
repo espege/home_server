@@ -8,6 +8,8 @@
   vars_files:
     - vars/networking.yaml
     - vars/ufw_rules.yaml
+    - vars/docker.yaml
+    - vars/sensitive/docker-sensitive.yaml
 
   vars:
     docker_apps:
@@ -16,18 +18,19 @@
       - qbittorrent
 
   tasks:
-    - name: Linux | Users | Create users and groups
-      ansible.builtin.include_tasks:
-        file: tasks/linux_users.yaml
-      tags:
-        - users
-        - groups
 
     - name: Linux | APT | Install packages
       ansible.builtin.include_tasks:
         file: tasks/linux_packages.yaml
       tags:
         - packages
+
+    - name: Linux | Users | Create users and groups
+      ansible.builtin.include_tasks:
+        file: tasks/linux_users.yaml
+      tags:
+        - users
+        - groups
 
     - name: Linux | ZFS | Storage Pool Config
       ansible.builtin.include_tasks:
@@ -36,19 +39,14 @@
         - zfs
         - storage_pool
 
-    # - name: Linux | Docker | Configure docker app setups
-    #   ansible.builtin.import_tasks:
-    #     file: "{{ item }}"
-    #   loop:
-    #     - tasks/configure_qbittorrent.yml
-    #     - tasks/configure_onedrive.yml
-    #     - tasks/configure_nordvpn.yml
-    #     - tasks/install_actual_budget.yml
-    #     - tasks/install_actual_budget.yml
-    #   tags:
-    #     - docker_apps
-    #   when: zfs_pool_exists
-
+    - name: Docker | Create Compose file
+      ansible.builtin.include_role:
+        name: docker_compose_generator
+      tags:
+        - docker
+        - docker_compose
+      vars:
+         docker_compose_generator_default_bind_path: "{{ preferred_docker_app_path | default(omit) }}"
 
     - name: Ubuntu | Firewall | SSH Firewall config
       ansible.builtin.include_role:

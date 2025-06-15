@@ -8,6 +8,7 @@ users:
       - nordvpn
       - Media
       - sudo
+      - docker
     public_key: !vault |
       $ANSIBLE_VAULT;1.1;AES256
       31356463623133396162346531356466623862343661366239383631346237333638353163366262
