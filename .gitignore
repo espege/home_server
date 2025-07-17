@@ -5,3 +5,4 @@ ssh_keys/*
 microserver.code-workspace
 playbooks/vars/sensitive/*
 .DS_Store
+compose_files/*

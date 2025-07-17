@@ -1,13 +1,28 @@
 ---
+
 - name: Docker Compose Generator
   tags:
     - docker
     - docker_compose
   block:
 
+    - name: Create {{ docker_compose_generator_default_local_compose_output_path }}
+      ansible.builtin.file:
+        path: "{{ docker_compose_generator_default_local_compose_output_path }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      become: false
+      when:
+        - docker_compose_generator_default_local_compose_output is defined
+        - docker_compose_generator_default_local_compose_output
+        - docker_compose_generator_default_local_compose_output_path is defined
+        - docker_compose_generator_default_local_compose_output_path
+
     - name: Install Docker and Docker Compose
       ansible.builtin.include_tasks:
         file: 'install_docker.yaml'
+
 
     - name: Create default docker volume bind directory {{ docker_compose_generator_default_bind_path }}
       ansible.builtin.file:
@@ -17,7 +32,7 @@
         owner: root
         group: root
 
-    - name: Find all folders under docker_apps directory
+    - name: Docker | Create list of apps to deploy
       become: false
       ansible.builtin.find:
         paths: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}"
@@ -35,6 +50,10 @@
         loop_var: 'docker_app'
       tags:
         - docker_compose
+
+    - name: Docker | Prune images
+      community.docker.docker_prune:
+        images: true
 
 # For all docker apps, create external network if it doesn't exist
 # For all docker apps, move any files to destination

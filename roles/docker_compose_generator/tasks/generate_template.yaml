@@ -3,6 +3,10 @@
   tags: "{{ docker_app }}" # Allows to control which docker compose app to run
   block:
 
+    - name: Facts | Initialize current_loop_facts
+      ansible.builtin.set_fact:
+        current_loop_facts: "{{ {} }}"
+
     - name: Ansible | Set Fact | docker_app_vars_key
       ansible.builtin.set_fact:
         docker_app_vars_key: "{{ docker_app }}_vars"
@@ -10,29 +14,72 @@
     - name: Include vars for {{ docker_app }}
       ansible.builtin.include_vars:
         file: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/{{ docker_app }}-vars.yaml"
-        name: "{{ docker_app_vars_key }}"
+        name: temp_vars
+
+    - name: Set fact for current app
+      ansible.builtin.set_fact:
+        current_loop_facts: "{{ temp_vars }}"
+
+    - name: Linux | Create User Accounts for {{ docker_app }}
+      ansible.builtin.user:
+        name: "{{ current_loop_facts.linux_users is defined and linux_user.name or '' }}"
+        comment:  "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
+        shell: "{{ linux_user.shell | default('/sbin/nologin') }}"
+        state: "{{ current_loop_facts.state | default('present') }}"
+      register:
+        docker_app_users
+      loop: "{{ current_loop_facts.linux_users | default([]) }}"
+      loop_control:
+        label: "{{ linux_user.name }}"
+        loop_var: 'linux_user'
+      when:
+        - current_loop_facts.linux_users is defined
+        - current_loop_facts.linux_users | length > 0
+      tags:
+      - user
 
     - name: Ansible | Find | .j2 files for {{ docker_app }}
       ansible.builtin.find:
         paths: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}"
         patterns: "*.j2"
         file_type: file
-        recurse: true
+        recurse: false # We aim for docker-compose.yaml.j2 and -env.j2 files only
       register: j2_files
       become: false
       delegate_to: localhost
 
-    - name: Ansible | Set Fact | Remote Compose Directory
+    - name: Ansible | Set Fact | Remote Compose Directory | {{ docker_app }} # Selects from custom_destination or default bind path for remote
       ansible.builtin.set_fact:
-        remote_compose_directory: "{{ docker_app_vars_key.custom_destination | default(docker_compose_generator_default_bind_path) }}"
-        docker_compose_contents: "{{ lookup('ansible.builtin.template', '{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/docker-compose.yaml.j2') | from_yaml }}"
+        remote_directory: "{{ current_loop_facts['custom_destination'] is defined | ternary(current_loop_facts['custom_destination'], docker_compose_generator_default_bind_path) }}"
 
-    - name: Ensure remote destination directory exists
+    # - name: debug facts
+    #   ansible.builtin.debug:
+    #     var: current_loop_facts
+
+    - name: Ansible | Set Fact | Helper Facts | {{ docker_app }}
+      ansible.builtin.set_fact:
+        sanitized_destination_compose_directory: "{{ remote_directory }}/{{ docker_app }}"
+        docker_compose_contents: "{{ lookup('ansible.builtin.template', '{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/docker-compose.yaml.j2') | from_yaml }}"
+        docker_app_install_state: "{{ current_loop_facts['state'] | default('present') }}"
+        output_local: "{{ current_loop_facts['local_compose_output'] | default(false) }}"
+
+    - name: Ansible | Set Fact | Local Compose Facts | {{ docker_app }} # Overwrite if local_compose_output is defined
+      ansible.builtin.set_fact:
+        sanitized_destination_compose_directory: "{{ docker_compose_generator_default_local_compose_output_path }}/{{ docker_app }}"
+      when:
+        - output_local is defined
+        - output_local
+
+    - name: Ensure remote destination directory exists | {{ docker_app }}
       ansible.builtin.file:
         state: directory
-        path: "{{ remote_compose_directory }}/{{ docker_app }}"
+        path: "{{ sanitized_destination_compose_directory }}"
+      delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
+      become: "{{ output_local | default(omit) | ternary(false, omit) }}"
 
-    - name: Docker Volumes | Create bind mounts
+    # - debug: msg="{{ docker_compose_contents.services | dict2items | selectattr('value.volumes', 'defined') | map(attribute='value.volumes') | flatten | selectattr('source', 'defined') | map(attribute='source') }}"
+
+    - name: Docker Volumes | Create bind mounts | {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'generate_bind_volumes.yaml'
       loop: "{{ docker_compose_contents.services | dict2items | selectattr('value.volumes', 'defined') | map(attribute='value.volumes') | flatten | selectattr('source', 'defined') | map(attribute='source') }}"
@@ -40,27 +87,54 @@
         label: "{{ docker_volume }}"
         loop_var: 'docker_volume'
 
+    - name: Docker Networks | Add external networks to Traefik  | {{ docker_app }}
+      ansible.builtin.include_tasks:
+        file: 'generate_networks.yaml'
+      loop: "{{ docker_compose_contents.networks | default({}) | dict2items | selectattr('value.external', 'defined') | selectattr('value.external', 'equalto', true) }}"
+      loop_control:
+        label: "{{ external_network.value.name }}"
+        loop_var: 'external_network'
+      when:
+        - current_loop_facts['connect_to_traefik'] is defined
+        - current_loop_facts['connect_to_traefik']
+
     - name: Generate templated files | {{ docker_app }}
       ansible.builtin.template:
         src: "{{ my_template.path }}"
-        dest: "{{ remote_compose_directory }}/{{ docker_app }}/{{ my_template.path | basename | string | replace('.j2', '') }}"
+        dest: "{{ sanitized_destination_compose_directory }}/{{ my_template.path | basename | string | replace('.j2', '') }}"
         mode: '0644'
+      delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
+      become: "{{ output_local | ternary(false, true) }}"
       tags:
         - docker_compose
       loop: "{{ j2_files.files }}"
       loop_control:
         label: "{{ my_template.path | basename }}"
         loop_var: my_template
-      register: generated_templates
+      register: generated_template
+
+    - name: Docker-Compose | Replace images tags with SHA | {{ docker_app }}
+      ansible.builtin.include_tasks:
+        file: 'get_latest_image_hash.yaml'
+      loop: "{{ docker_compose_contents.services | dict2items |  selectattr ('value.image', 'defined') | map(attribute='value.image') | flatten }}"
+      loop_control:
+        label: "{{ docker_image }}"
+        loop_var: 'docker_image'
+      when: docker_compose_contents.services is defined and docker_compose_contents.services | length > 0
 
     - name: Docker | Compose up | Portainer only
       community.docker.docker_compose_v2:
-        project_src: "{{ item.dest | dirname }}"
-        state: "{{ docker_app_vars_key.state | default('present') }}"
-      loop: "{{ generated_templates.results }}"
+        project_src: "{{ portainer_template.dest | dirname }}"
+        state: "{{ docker_app_install_state }}"
+      loop: "{{ generated_template.results }}"
+      loop_control:
+        label: "{{ portainer_template.dest | basename }}"
+        loop_var: portainer_template
       tags:
         - compose
         - docker
       when:
         - docker_app == 'portainer'
-        - "'docker-compose' in item.dest"
+        - "'docker-compose' in portainer_template.dest"
+        - current_loop_facts['docker_compose_run'] is defined
+        - current_loop_facts['docker_compose_run']

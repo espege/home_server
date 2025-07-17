@@ -1,21 +1,22 @@
 services:
   portainer:
-    image: portainer/portainer-ce:alpine@sha256:7cb4fddb64cf89d064f9f72bddba05c73383e7421a9ce53146f89219f30ad44b
-    container_name: portainer_v2
+    image: portainer/portainer-ce:alpine
+    container_name: portainer
     restart: always
     ports:
       - "8000:8000"
       - "9443:9443"
     networks:
       {{ docker_app }}:
-        ipv4_address: "{{ hostvars[inventory_hostname][docker_app_vars_key].preferred_subnet | regex_replace('^([0-9]+\\.[0-9]+\\.[0-9]+)\\..*', '\\1') }}.2"
+        ipv4_address: "{{ current_loop_facts.preferred_subnet | regex_replace('^([0-9]+\\.[0-9]+\\.[0-9]+)\\..*', '\\1') }}.2"
     labels:
       - traefik.enable=true
       - traefik.http.routers.{{ docker_app }}.rule=Host(`{{ docker_app }}.{{ public_domain_name }}`)
       - traefik.http.routers.{{ docker_app }}.entrypoints=websecure
       - traefik.http.routers.{{ docker_app }}.tls=true
       - traefik.http.services.{{ docker_app }}.loadbalancer.server.port=9443
-
+    environment:
+      - TZ={{ time_zone }}
     volumes:
       - type: bind
         source: {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/data
@@ -25,11 +26,13 @@ services:
       - {{ docker_app }}.env
 
   portainer_agent:
-    image: portainer/agent:alpine@sha256:ccdafc4e38ed1f31d3061949d9e18a4dff007ffafb268d0f6af4ae3e8209d1b5
-    container_name: portainer_agent_v2
+    image: portainer/agent:alpine
+    container_name: portainer_agent
+    environment:
+      - TZ={{ time_zone }}
     networks:
       {{ docker_app }}:
-        ipv4_address: "{{ hostvars[inventory_hostname][docker_app_vars_key].preferred_subnet | regex_replace('^([0-9]+\\.[0-9]+\\.[0-9]+)\\..*', '\\1') }}.3"
+        ipv4_address: "{{ current_loop_facts.preferred_subnet | regex_replace('^([0-9]+\\.[0-9]+\\.[0-9]+)\\..*', '\\1') }}.3"
     restart: always
     ports:
       - "9001:9001"
@@ -41,9 +44,9 @@ services:
 
 networks:
   {{ docker_app }}:
-    name: {{ docker_app }}-network
+    name: {{ docker_app }}_network
     driver: bridge
     ipam:
       config:
-        - subnet: "{{ hostvars[inventory_hostname][docker_app_vars_key].preferred_subnet }}"
+        - subnet: "{{ current_loop_facts.preferred_subnet }}"
     enable_ipv6: false

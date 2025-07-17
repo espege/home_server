@@ -1,0 +1,25 @@
+---
+
+- name: Docker | Get latest image SHA | {{ docker_image }}
+  ansible.builtin.include_role:
+    name: docker_image_sha # Registers: tag_info
+  tags:
+    - docker_sha
+
+- name: Outputs | Determine compose file location
+  ansible.builtin.set_fact:
+    reference_compose_path: "{{ generated_template.results | selectattr('dest', 'defined') | select('search', 'docker-compose.yaml') | map(attribute='dest') | list | first }}"
+  delegate_to: localhost
+  become: false
+  when: docker_image is string and docker_image | regex_search('^([^:]+):(.+)$')
+
+- name: Replace image with SHA in compose.yaml | {{ docker_app }}
+  ansible.builtin.lineinfile:
+    line: "    image: {{ docker_image_ref }}@{{ tag_info.json.digest }}"
+    path: "{{ reference_compose_path }}"
+    search_string: "{{ docker_image }}"
+  delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
+  become: "{{ output_local | ternary(false, true) }}"
+  tags:
+      - docker_compose_sha
+  when: tag_info.status == 200 and tag_info.json.digest is defined

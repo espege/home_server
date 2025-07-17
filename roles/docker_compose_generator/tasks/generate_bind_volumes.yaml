@@ -1,13 +1,127 @@
 ---
 
-- name: Docker Volumes | Create directory {{ docker_volume }}
-  become: true
-  ansible.builtin.file:
-    path: "{{ docker_volume }}"
-    state: 'directory'
-    owner: "{{ bind_vol_owner | default('root') }}"
-    group: "{{ bind_vol_group | default('root') }}"
-    mode: "{{ dir_permissions | default('770') }}"
-  when: not docker_volume | regex_search('^\.[^.]+$') # Volumes don't have a file extension
-  tags:
-    - directories
+# The easiest method is copy an entire folder structure which uses the same name as the docker_app.
+# If the folder structure is not found, fallback to create volumes from docker_compose
+
+- name: Ansible | Stat for directory structure in {{ docker_app }} # If found, then copy as remote_directory
+  ansible.builtin.stat:
+    path: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/{{ docker_app }}"
+  delegate_to: localhost
+  become: false
+  register: directory_to_copy
+
+- name: Ansible | Copy remote directory if directory matching name {{ docker_app }} exists
+  when: directory_to_copy is defined and directory_to_copy.stat.exists
+  block:
+    - name: Ansible | Localhost operations
+      become: false
+      delegate_to: localhost
+      block:
+      # Create a temporary directory for processing .j2 files
+      - name: Create temp directory for j2 processing
+        ansible.builtin.tempfile:
+          path: "{{ playbook_dir }}"
+          state: directory
+          suffix: _j2tmp
+        register: temp_j2_dir
+        changed_when: false
+
+      # Copy the directory structure to the temp directory
+      - name: Copy | Docker App Directory Structure to temp
+        ansible.builtin.copy:
+          src: "{{ directory_to_copy.stat.path }}"
+          dest: "{{ temp_j2_dir.path }}/"
+          mode: "{{ dir_permissions | default('770') }}"
+        changed_when: false
+
+      # Find all .j2 files in the temp directory
+      - name: Ansible | Find | .j2 files in temp directory
+        ansible.builtin.find:
+          paths: "{{ temp_j2_dir.path }}"
+          patterns: "*.j2"
+          file_type: file
+          recurse: true
+        register: temp_j2_files
+
+      # Convert .j2 files in temp directory to their final form
+      - name: Ansible | Convert .j2 files in temp dir
+        ansible.builtin.template:
+          src: "{{ item.path }}"
+          dest: "{{ item.path | regex_replace('\\.j2$', '') }}"
+        loop: "{{ temp_j2_files.files }}"
+        loop_control:
+          label: "{{ item.path | regex_replace('\\.j2$', '') }}"
+        when: temp_j2_files is defined and temp_j2_files.files | length > 0
+        changed_when: false
+
+      # Delete files with .j2 extension in temp directory
+      - name: Template | delete .j2 files in temp dir
+        ansible.builtin.file:
+          path: "{{ item.path }}"
+          state: absent
+        loop: "{{ temp_j2_files.files }}"
+        loop_control:
+          label: "{{ item.path }}"
+        when: temp_j2_files is defined and temp_j2_files.files | length > 0
+        changed_when: false
+
+    # Copy to final destination
+    - name: Copy processed directory to final destination
+      ansible.builtin.copy:
+        src: "{{ temp_j2_dir.path }}/"
+        dest: "{{ remote_directory }}"
+        mode: "{{ dir_permissions | default('770') }}"
+        owner: "{{ bind_vol_owner | default('root') }}"
+        group: "{{ bind_vol_group | default('root') }}"
+  always:
+  # Cleanup temp directory
+  - name: Remove temp directory
+    become: false
+    delegate_to: localhost
+    ansible.builtin.file:
+      path: "{{ temp_j2_dir.path }}"
+      state: absent
+    when: temp_j2_dir is defined and temp_j2_dir.path is defined
+    changed_when: false
+
+  rescue:
+  - name: Remove temp directory
+    become: false
+    delegate_to: localhost
+    ansible.builtin.file:
+      path: "{{ temp_j2_dir.path }}"
+      state: absent
+    when: temp_j2_dir is defined and temp_j2_dir.path is defined
+    changed_when: false
+
+- name: Block | Create only an empty directory for {{ docker_volume }}
+  when: directory_to_copy is defined and not directory_to_copy.stat.exists
+  block:
+  # Create an empty directory for the docker volume
+  - name: Set Fact | Path is a volume
+    ansible.builtin.set_fact:
+      split_volume: "{{ docker_volume | splitext }}"
+
+  - name: Docker Volumes | Create parent directory {{ split_volume[0] }}
+    become: true
+    ansible.builtin.file:
+      path: "{{ split_volume[0] }}"
+      state: 'directory'
+      owner: "{{ bind_vol_owner | default('root') }}"
+      group: "{{ bind_vol_group | default('root') }}"
+      mode: "{{ dir_permissions | default('770') }}"
+    when: split_volume is defined and split_volume[1] # Path ends with file extension
+    tags:
+      - directories
+
+  - name: Docker Volumes | Create directory {{ docker_volume }}
+    become: true
+    ansible.builtin.file:
+      path: "{{ docker_volume }}"
+      state: 'directory'
+      owner: "{{ bind_vol_owner | default('root') }}"
+      group: "{{ bind_vol_group | default('root') }}"
+      mode: "{{ dir_permissions | default('770') }}"
+    when: split_volume is defined and not split_volume # Path ends without file extension
+    tags:
+      - directories
