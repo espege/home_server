@@ -20,7 +20,5 @@
         comment: "{{ item.comment | default(omit) }}"
       loop:
         "{{ ufw_config_ruleset }}"
-
-    - name: Enable UFW
-      community.general.ufw:
-        state: enabled
+      notify:
+        - Enable UFW

@@ -1,9 +1,30 @@
 ---
-ssh_from_local_subnet:
+local_subnet_ufw:
   - rule: allow
     proto: tcp
     port: 22
     from_ip: "{{ local_subnet_range }}"
     to_ip: "{{ ansible_host }}"
     comment: Allow private subnet SSH
-    delete: no
+    delete: false
+  - rule: allow
+    proto: udp
+    port: 5353
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow private subnet mDNS
+    delete: false
+  - rule: allow
+    proto: tcp
+    port: 53
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow private subnet DNS tcp
+    delete: false
+  - rule: allow
+    proto: udp
+    port: 53
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow private subnet DNS udp
+    delete: false

@@ -10,6 +10,7 @@
     - vars/ufw_rules.yaml
     - vars/docker.yaml
     - vars/sensitive/docker-sensitive.yaml
+    - vars/volumes.yaml
 
   vars:
     docker_apps:
@@ -53,5 +54,5 @@
       ansible.builtin.include_role:
         name: ufw_config
       vars:
-        ufw_config_ruleset: "{{ ssh_from_local_subnet }}"
+        ufw_config_ruleset: "{{ local_subnet_ufw }}"
       tags: firewall

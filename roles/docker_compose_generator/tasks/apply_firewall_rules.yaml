@@ -1,0 +1,7 @@
+- name: Ubuntu | Firewall | SSH Firewall config
+  ansible.builtin.include_role:
+    name: ufw_config
+  vars:
+    ufw_config_ruleset: "{{ ufw }}"
+  tags: firewall
+  when: ufw is defined and ufw | length > 0

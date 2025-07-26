@@ -2,4 +2,4 @@
 docker_compose_generator_docker_install_status: true
 docker_compose_generator_default_bind_path: "/opt/docker_compose_generator"
 docker_compose_generator_default_local_compose_output: true
-docker_compose_generator_default_local_compose_output_path: "{{ playbook_dir}}/../compose_files" # This syntax avoids a relative path issue
+docker_compose_generator_default_local_compose_output_path: "{{ playbook_dir }}/../compose_files" # This syntax avoids a relative path issue

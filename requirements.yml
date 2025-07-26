@@ -1,4 +1,7 @@
 ---
 collections:
   - name: community.general
-    version: ">=7.0.0"  # Version minimale requise pour les fonctionnalités ZFS
+    version: ">=7.0.0"
+
+  - name: community.docker
+    version: ">= 4.6.0"

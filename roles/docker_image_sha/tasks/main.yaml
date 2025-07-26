@@ -1,5 +1,6 @@
 ---
-- ansible.builtin.assert:
+- name: Validate inputs
+  ansible.builtin.assert:
     that:
       - docker_image is string
       - docker_image | regex_search('^([^:]+):(.+)$')

@@ -9,7 +9,7 @@ pool_folders:
         etype: group
         state: present
         permissions: rw
-        default: yes
+        default: true
 
   Videos/TV:
     owner: root

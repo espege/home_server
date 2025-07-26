@@ -100,19 +100,7 @@
   # Create an empty directory for the docker volume
   - name: Set Fact | Path is a volume
     ansible.builtin.set_fact:
-      split_volume: "{{ docker_volume | splitext }}"
-
-  - name: Docker Volumes | Create parent directory {{ split_volume[0] }}
-    become: true
-    ansible.builtin.file:
-      path: "{{ split_volume[0] }}"
-      state: 'directory'
-      owner: "{{ bind_vol_owner | default('root') }}"
-      group: "{{ bind_vol_group | default('root') }}"
-      mode: "{{ dir_permissions | default('770') }}"
-    when: split_volume is defined and split_volume[1] # Path ends with file extension
-    tags:
-      - directories
+      split_volume: "{{ docker_volume | splitext | list }}"
 
   - name: Docker Volumes | Create directory {{ docker_volume }}
     become: true
@@ -122,6 +110,8 @@
       owner: "{{ bind_vol_owner | default('root') }}"
       group: "{{ bind_vol_group | default('root') }}"
       mode: "{{ dir_permissions | default('770') }}"
-    when: split_volume is defined and not split_volume # Path ends without file extension
+      recurse: false # Takes too long for large directories
+    when:
+      - split_volume is defined and split_volume[1] == '' # Path ends without file extension
     tags:
       - directories
