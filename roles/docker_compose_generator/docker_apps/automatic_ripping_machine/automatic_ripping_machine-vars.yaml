@@ -1,0 +1,19 @@
+state: present
+connect_to_traefik: true
+local_compose_output: true # Output to local machine
+linux_users:
+  - name: arm
+    comment: 'automation ripping machine User'
+    shell: /usr/sbin/nologin
+bind_vol_owner: arm
+bind_vol_group_is_extra: true
+linux_extra_groups:
+  - Media
+  - cdrom
+ufw:
+  - rule: allow
+    proto: tcp
+    port: 8084
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow private subnet automatic ripping machine

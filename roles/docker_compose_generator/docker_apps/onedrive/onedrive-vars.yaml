@@ -1,0 +1,7 @@
+state: present
+connect_to_traefik: false
+local_compose_output: true # Output to local machine
+linux_users:
+  - name: onedrive
+    comment: 'OneDrive Sync User'
+    shell: /bin/bash

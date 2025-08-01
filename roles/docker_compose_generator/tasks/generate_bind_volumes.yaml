@@ -1,14 +1,15 @@
 ---
-
-# The easiest method is copy an entire folder structure which uses the same name as the docker_app.
-# If the folder structure is not found, fallback to create volumes from docker_compose
-
 - name: Ansible | Stat for directory structure in {{ docker_app }} # If found, then copy as remote_directory
   ansible.builtin.stat:
     path: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/{{ docker_app }}"
   delegate_to: localhost
   become: false
   register: directory_to_copy
+
+- name: Ansible | Set Fact | Bind Volume Owner
+  ansible.builtin.set_fact:
+    bind_vol_owner: "{{ current_loop_facts.bind_vol_owner | default(root) }}"
+    bind_vol_group: "{{ current_loop_facts.bind_vol_group_is_extra | ternary(extra_groups_gid_map.values() | first, docker_app_users[0].group | default(root)) }}"
 
 - name: Ansible | Copy remote directory if directory matching name {{ docker_app }} exists
   when: directory_to_copy is defined and directory_to_copy.stat.exists
@@ -71,8 +72,8 @@
         src: "{{ temp_j2_dir.path }}/"
         dest: "{{ remote_directory }}"
         mode: "{{ dir_permissions | default('770') }}"
-        owner: "{{ bind_vol_owner | default('root') }}"
-        group: "{{ bind_vol_group | default('root') }}"
+        owner: "{{ bind_vol_owner }}"
+        group: "{{ bind_vol_group }}"
   always:
   # Cleanup temp directory
   - name: Remove temp directory
@@ -94,24 +95,23 @@
     when: temp_j2_dir is defined and temp_j2_dir.path is defined
     changed_when: false
 
-- name: Block | Create only an empty directory for {{ docker_volume }}
-  when: directory_to_copy is defined and not directory_to_copy.stat.exists
+- name: Block | Ensure bind volumes exist for {{ docker_volume }}
   block:
-  # Create an empty directory for the docker volume
   - name: Set Fact | Path is a volume
     ansible.builtin.set_fact:
       split_volume: "{{ docker_volume | splitext | list }}"
 
-  - name: Docker Volumes | Create directory {{ docker_volume }}
+  - name: Docker Volumes | Ensure explicit bind volumes from docker_compose {{ docker_volume }}
     become: true
     ansible.builtin.file:
       path: "{{ docker_volume }}"
       state: 'directory'
-      owner: "{{ bind_vol_owner | default('root') }}"
-      group: "{{ bind_vol_group | default('root') }}"
+      owner: "{{ bind_vol_owner }}"
+      group: "{{ bind_vol_group }}"
       mode: "{{ dir_permissions | default('770') }}"
       recurse: false # Takes too long for large directories
     when:
       - split_volume is defined and split_volume[1] == '' # Path ends without file extension
     tags:
       - directories
+    check_mode: true

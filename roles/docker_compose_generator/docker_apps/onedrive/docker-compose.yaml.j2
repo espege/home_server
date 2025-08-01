@@ -1,0 +1,24 @@
+services:
+  onedrive:
+    container_name: onedrive
+    image: driveone/onedrive:edge
+    restart: unless-stopped
+    environment: # https://github.com/abraunegg/onedrive/blob/master/docs/docker.md
+      - TZ={{ time_zone }}
+      - ONEDRIVE_UID={{ docker_app_users.results[0].uid }}
+      - ONEDRIVE_GID={{ docker_app_users.results[0].group }}
+      - ONEDRIVE_DISPLAY_CONFIG=1
+      - ONEDRIVE_RESYNC=0 # Default = 0
+    cpus: 3
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1  # Recomended if using ipv4 only
+    volumes:
+      - type: bind
+        source: /var/log/onedrive
+        target: /var/log/onedrive
+      - type: bind
+        source: {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/config
+        target: /onedrive/conf/
+      - type: bind
+        source: /{{ zfs_pool_name }}/OneDriveDS
+        target: /onedrive/data/

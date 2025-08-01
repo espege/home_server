@@ -1,20 +1,3 @@
-- name: Linux | Create User Accounts for {{ docker_app }}
-  ansible.builtin.user:
-    name: "{{ current_loop_facts.linux_users is defined and linux_user.name or '' }}"
-    comment:  "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
-    shell: "{{ linux_user.shell | default('/sbin/nologin') }}"
-    state: "{{ current_loop_facts.state | default('present') }}"
-  register: docker_app_users
-  loop: "{{ current_loop_facts.linux_users | default([]) }}"
-  loop_control:
-    label: "{{ linux_user.name }}"
-    loop_var: 'linux_user'
-  when:
-    - current_loop_facts.linux_users is defined
-    - current_loop_facts.linux_users | length > 0
-  tags:
-    - user
-
 - name: Linux | Add Extra groups
   when:
     - current_loop_facts.linux_extra_groups is defined
@@ -61,4 +44,20 @@
   - name: Debug all extra group GIDs
     debug: var=extra_groups_gid_map
 
-  - debug: msg="{{ extra_groups_gid_map.values() | join(',')}}"
+- name: Linux | Create User Accounts for {{ docker_app }}
+  ansible.builtin.user:
+    name: "{{ current_loop_facts.linux_users is defined and linux_user.name or '' }}"
+    comment:  "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
+    groups: "{{ (extra_groups_gid_map is defined and extra_groups_gid_map | length > 0) | ternary(extra_groups_gid_map.keys() | join(','), omit) }}"
+    shell: "{{ linux_user.shell | default('/sbin/nologin') }}"
+    state: "{{ current_loop_facts.state | default('present') }}"
+  register: docker_app_users
+  loop: "{{ current_loop_facts.linux_users | default([]) }}"
+  loop_control:
+    label: "{{ linux_user.name }}"
+    loop_var: 'linux_user'
+  when:
+    - current_loop_facts.linux_users is defined
+    - current_loop_facts.linux_users | length > 0
+  tags:
+    - user
