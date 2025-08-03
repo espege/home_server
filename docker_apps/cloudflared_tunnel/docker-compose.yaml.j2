@@ -1,0 +1,8 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    network_mode: "host"
+    container_name: cloudflared_tunnel
+    command: tunnel run --token {{ cloudflared_tunnel_config.tunnel_token | default('') }}
+    environment:
+      - TZ={{ docker_compose_generator_default_time_zone }}

@@ -4,7 +4,7 @@ services:
     image: driveone/onedrive:edge
     restart: unless-stopped
     environment: # https://github.com/abraunegg/onedrive/blob/master/docs/docker.md
-      - TZ={{ time_zone }}
+      - TZ={{ docker_compose_generator_default_time_zone }}
       - ONEDRIVE_UID={{ docker_app_users.results[0].uid }}
       - ONEDRIVE_GID={{ docker_app_users.results[0].group }}
       - ONEDRIVE_DISPLAY_CONFIG=1

@@ -1,0 +1,18 @@
+---
+state: present
+local_compose_output: true  # Output to local machine
+linux_users:
+  - name: plex
+    comment: 'Plex Media Server service account | Created by ansible'
+    shell: /usr/sbin/nologin
+bind_vol_owner: plex
+bind_vol_group_is_extra: true
+linux_extra_groups:
+  - Media
+ufw:
+  - rule: allow
+    proto: tcp
+    port: "{{ plex_config.external_port | default('32400') }}"
+    from_ip: "any"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow plex external

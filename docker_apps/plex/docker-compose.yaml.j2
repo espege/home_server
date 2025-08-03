@@ -1,0 +1,49 @@
+services:
+  plex:
+    container_name: plex
+    hostname: plex
+    image: plexinc/pms-docker:public
+    restart: unless-stopped
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1  # Recommended if using ipv4 only
+    devices:
+      - /dev/dri
+    ports:
+    - {{ plex_config.external_port | default('32400') }}:32400/tcp
+    - 8324:8324/tcp
+    - 32469:32469/tcp
+    - 1900:1900/udp
+    - 32410:32410/udp
+    - 32412:32412/udp
+    - 32413:32413/udp
+    - 32414:32414/udp
+    environment:
+      - TZ={{ docker_compose_generator_default_time_zone }}
+      - PLEX_CLAIM={{ plex_config.plex_claim | default('') }}
+      - ADVERTISE_IP=http://{{ ansible_host }}:32400
+      - HOSTNAME={{ plex_config.server_hostname | default('plex') }}
+      - ALLOWED_NETWORKS={{ local_subnet_range | default('192.168.0.0/24') }}
+      - CHANGE_CONFIG_DIR_OWNERSHIP=false
+      - PLEX_UID={{ docker_app_users.results[0].uid }}
+      - PLEX_GID={{ extra_groups_gid_map['Media'] }}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.plex.rule=Host(`plex.{{ public_domain_name }}`)
+      - traefik.http.routers.plex.entrypoints=websecure
+      - traefik.http.routers.plex.tls=true
+      - traefik.http.services.plex.loadbalancer.server.port={{ plex_config.external_port | default('32400') }}
+    volumes:
+      - {{ docker_compose_generator_default_bind_path }}/plex:/config
+      - type: bind
+        source: {{ zfs_pool_name }}/Videos/Films
+        target: /media/movies
+      - type: bind
+        source: {{ zfs_pool_name }}/Videos/TV
+        target: /media/tv
+      - type: bind
+        source: {{ zfs_pool_name }}/Videos/Musique
+        target: /media/music
+      - type: bind
+        source: {{ zfs_pool_name }}/Videos/Famille
+        target: /media/family
+      - /qbittorrent-staging/downloads:/media/staged-torrents:ro

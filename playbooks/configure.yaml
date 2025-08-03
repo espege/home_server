@@ -6,17 +6,11 @@
   become: true
 
   vars_files:
-    - vars/networking.yaml
-    - vars/ufw_rules.yaml
     - vars/docker.yaml
+    - vars/networking.yaml
     - vars/sensitive/docker-sensitive.yaml
+    - vars/ufw_rules.yaml
     - vars/volumes.yaml
-
-  vars:
-    docker_apps:
-      - plex
-      - onedrive
-      - qbittorrent
 
   tasks:
 

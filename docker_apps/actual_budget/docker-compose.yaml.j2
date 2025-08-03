@@ -7,7 +7,7 @@ services:
     ports:
       - 5006:5006
     environment:
-      - TZ={{ time_zone }}
+      - TZ={{ docker_compose_generator_default_time_zone }}
     labels:
       - traefik.enable=true
       - traefik.http.routers.actual.rule=Host(`actual.{{ public_domain_name }}`) || Host(`budget.{{ public_domain_name }}`) || Host(`budget.{{ local_domain_name }}`)
