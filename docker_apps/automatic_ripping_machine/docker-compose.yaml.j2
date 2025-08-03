@@ -22,8 +22,7 @@ services:
       - ARM_UID={{ docker_app_users.results[0].uid }}
       - ARM_GID={{ extra_groups_gid_map['Media'] }}
       - TZ={{ time_zone }}
-      - PATH=/usr/bin/HandBrakeCLI:${PATH} # I need this only for troubleshooting
     devices:
       - "/dev/sr0:/dev/sr0" # Copied verbatim from makemkv config
-      # - "/dev/sg7:/dev/sg7" # Copied verbatim from makemkv config # Commented out for troubleshooting
+      - "/dev/sg7:/dev/sg7" # Copied verbatim from makemkv config
       - /dev/dri # For hardware acceleration, if available

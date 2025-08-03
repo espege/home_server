@@ -1,3 +1,4 @@
+---
 state: present
 connect_to_traefik: false
 local_compose_output: true # Output to local machine

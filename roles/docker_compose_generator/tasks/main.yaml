@@ -19,6 +19,12 @@
         - docker_compose_generator_default_local_compose_output_path is defined
         - docker_compose_generator_default_local_compose_output_path != ""
 
+    - name: Ansible | Set Fact | docker_apps_path
+      ansible.builtin.set_fact:
+        docker_apps_path: "{{ playbook_dir }}/../{{ docker_compose_generator_docker_app_directory }}"
+      run_once: true
+      delegate_to: localhost
+
     - name: Install Docker and Docker Compose
       ansible.builtin.include_tasks:
         file: 'install_docker.yaml'
@@ -34,7 +40,7 @@
     - name: Docker | Create list of apps to deploy
       become: false
       ansible.builtin.find:
-        paths: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}"
+        paths: "{{ docker_apps_path }}"
         file_type: directory
         recurse: false
       delegate_to: localhost

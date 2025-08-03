@@ -9,29 +9,29 @@
     - vars/linux_users.yaml
 
   tasks:
-  - name: Ubunutu | Basic config
-    become: true
-    block:
-      - name: Linux | Users | Create Ansible
-        ansible.builtin.user:
-          name: "{{ users.ansible.name }}"
-          comment: "{{ users.ansible.comment }}"
-          state: present
-          groups: sudo
-          createhome: true
-          shell: /bin/bash
+    - name: Ubunutu | Basic config
+      become: true
+      block:
+        - name: Linux | Users | Create Ansible
+          ansible.builtin.user:
+            name: "{{ users.ansible.name }}"
+            comment: "{{ users.ansible.comment }}"
+            state: present
+            groups: sudo
+            createhome: true
+            shell: /bin/bash
 
-      - name: Linux | Sudoers | Create ansible sudoers file
-        ansible.builtin.copy:
-          dest: /etc/sudoers.d/ansible
-          content: "ansible ALL=(ALL) NOPASSWD: ALL"
-          mode: '0440'
-          validate: 'visudo -cf %s'
+        - name: Linux | Sudoers | Create ansible sudoers file
+          ansible.builtin.copy:
+            dest: /etc/sudoers.d/ansible
+            content: "ansible ALL=(ALL) NOPASSWD: ALL"
+            mode: '0440'
+            validate: 'visudo -cf %s'
 
-      # Add public key to ansible user home
-      - name: Linux | Keys | Add ansible key file
-        ansible.posix.authorized_key:
-          user: "{{ users.ansible.name }}"
-          state: present
-          key: "{{ users.ansible.public_key }}"
-        remote_user: ansible
+        # Add public key to ansible user home
+        - name: Linux | Keys | Add ansible key file
+          ansible.posix.authorized_key:
+            user: "{{ users.ansible.name }}"
+            state: present
+            key: "{{ users.ansible.public_key }}"
+          remote_user: ansible

@@ -7,20 +7,16 @@
       ansible.builtin.set_fact:
         current_loop_facts: "{{ {} }}"
 
-    - name: Ansible | Set Fact | docker_app_vars_key
-      ansible.builtin.set_fact:
-        docker_app_vars_key: "{{ docker_app }}_vars"
-
     - name: Include vars for {{ docker_app }}
       ansible.builtin.include_vars:
-        file: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/{{ docker_app }}-vars.yaml"
+        file: "{{ docker_apps_path }}/{{ docker_app }}/{{ docker_app }}-vars.yaml"
         name: temp_vars
 
     - name: Set fact for current app
       ansible.builtin.set_fact:
         current_loop_facts: "{{ temp_vars }}"
 
-    - name : Docker Users | Create users and groups | {{ docker_app }}
+    - name: Docker Users | Create users and groups | {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'generate_docker_users.yaml'
       when:
@@ -31,7 +27,7 @@
 
     - name: Ansible | Find | .j2 files for {{ docker_app }}
       ansible.builtin.find:
-        paths: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}"
+        paths: "{{ docker_apps_path }}/{{ docker_app }}"
         patterns: "*.j2"
         file_type: file
         recurse: false # We aim for docker-compose.yaml.j2 and -env.j2 files only
@@ -51,7 +47,7 @@
 
     - name: Ansible | Set Fact | Docker Compose Content | {{ docker_app }}
       ansible.builtin.set_fact:
-        docker_compose_contents: "{{ lookup('ansible.builtin.template', docker_compose_generator_docker_app_directory + '/' + docker_app + '/docker-compose.yaml.j2') | from_yaml }}"
+        docker_compose_contents: "{{ lookup('ansible.builtin.template', docker_apps_path + '/' + docker_app + '/docker-compose.yaml.j2') | from_yaml }}"
 
     - name: Ansible | Set Fact | Local Compose Facts | {{ docker_app }} # Overwrite if local_compose_output is defined
       ansible.builtin.set_fact:
@@ -64,6 +60,7 @@
       ansible.builtin.file:
         state: directory
         path: "{{ sanitized_destination_compose_directory }}"
+        mode: "{{ docker_compose_generator_default_dir_permissions }}"
       delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
       become: "{{ output_local | default(omit) | ternary(false, omit) }}"
 
@@ -109,7 +106,7 @@
     - name: Docker-Compose | Replace images tags with SHA | {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'get_latest_image_hash.yaml'
-      loop: "{{ docker_compose_contents.services | dict2items |  selectattr ('value.image', 'defined') | map(attribute='value.image') | flatten }}"
+      loop: "{{ docker_compose_contents.services | dict2items | selectattr ('value.image', 'defined') | map(attribute='value.image') | flatten }}"
       loop_control:
         label: "{{ docker_image }}"
         loop_var: 'docker_image'

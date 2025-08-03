@@ -1,6 +1,4 @@
-
-# - debug: var=external_network
-
+---
 - name: Traefik networks | Create external networks
   delegate_to: localhost
   become: false
@@ -12,13 +10,13 @@
   block:
     - name: Ansible | Stat Traefik docker-compose.yaml
       ansible.builtin.stat:
-        path: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/traefik/docker-compose.yaml.j2"
+        path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
       run_once: true
       register: traefik_compose_stat
 
     - name: Traefik networks | Add network to proxy service networks list
       ansible.builtin.lineinfile:
-        path: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/traefik/docker-compose.yaml.j2"
+        path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
         insertafter: "^    networks:?"
         regexp: "^      - {{ external_network.value.name }}?"
         line: "      - {{ external_network.value.name }}"
@@ -27,7 +25,7 @@
 
     - name: Traefik networks | Add network to networks section
       ansible.builtin.blockinfile:
-        path: "{{ role_path }}/{{ docker_compose_generator_docker_app_directory }}/traefik/docker-compose.yaml.j2"
+        path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
         insertafter: 'networks:'
         marker: "# {mark} NETWORK {{ external_network.value.name | upper }}"
         state: "{{ current_loop_facts['state'] | default('present') }}"

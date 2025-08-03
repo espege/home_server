@@ -1,4 +1,5 @@
+---
 state: present
 preferred_subnet: '172.31.0.0/16'
-docker_compose_run: true
+# docker_compose_run: true
 connect_to_traefik: true

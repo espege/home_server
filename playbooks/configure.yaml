@@ -47,8 +47,8 @@
         - docker
         - docker_compose
       vars:
-         docker_compose_generator_default_bind_path: "{{ preferred_docker_app_path | default(omit) }}"
-         docker_compose_generator_default_local_compose_output_path: "{{ local_dir_for_docker_compose_repo | default(omit) }}"
+        docker_compose_generator_default_bind_path: "{{ preferred_docker_app_path | default(omit) }}"
+        docker_compose_generator_default_local_compose_output_path: "{{ local_dir_for_docker_compose_repo | default(omit) }}"
 
     - name: Ubuntu | Firewall | SSH Firewall config
       ansible.builtin.include_role:

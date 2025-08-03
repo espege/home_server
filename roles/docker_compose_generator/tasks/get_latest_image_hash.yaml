@@ -23,5 +23,5 @@
   delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
   become: "{{ output_local | ternary(false, true) }}"
   tags:
-      - docker_compose_sha
+    - docker_compose_sha
   when: tag_info.status == 200 and tag_info.json.digest is defined

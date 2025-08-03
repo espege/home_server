@@ -3,48 +3,48 @@
     - current_loop_facts.linux_extra_groups is defined
     - current_loop_facts.linux_extra_groups | length > 0
   block:
-  - name: Linux | Fetch GID for extra groups | {{ docker_app }}
-    ansible.builtin.getent:
-      database: group
-      key: "{{ item }}"
-    register: extra_group_gid
-    loop: "{{ current_loop_facts.linux_extra_groups | default([]) }}"
-    loop_control:
-      label: "{{ item }}"
-    changed_when: false
-    failed_when: false
-    tags:
-      - user
+    - name: Linux | Fetch GID for extra groups | {{ docker_app }}
+      ansible.builtin.getent:
+        database: group
+        key: "{{ item }}"
+      register: extra_group_gid
+      loop: "{{ current_loop_facts.linux_extra_groups | default([]) }}"
+      loop_control:
+        label: "{{ item }}"
+      changed_when: false
+      failed_when: false
+      tags:
+        - user
 
-  - name: Initialize extra_groups_gid_map
-    ansible.builtin.set_fact:
-      extra_groups_gid_map: {}
+    - name: Initialize extra_groups_gid_map
+      ansible.builtin.set_fact:
+        extra_groups_gid_map: {}
 
-  - name: Populate extra_groups_gid_map with each group’s GID
-    ansible.builtin.set_fact:
-      extra_groups_gid_map: >-
-        {{ extra_groups_gid_map
-          | combine({
-              gid: (
-                extra_group_gid.results
-                | selectattr('item','equalto',gid)
-                | first
-                | default({})
-              ).ansible_facts.getent_group[gid][1]
-              | default('UNKNOWN', true)
-              | string
-              | trim
-            })
-        }}
-    loop: "{{ current_loop_facts.linux_extra_groups | default([]) }}"
-    loop_control:
-      loop_var: gid
-      label: "{{ gid }}"
+    - name: Populate extra_groups_gid_map with each group’s GID
+      ansible.builtin.set_fact:
+        extra_groups_gid_map: >-
+          {{ extra_groups_gid_map
+            | combine({
+                gid: (
+                  extra_group_gid.results
+                  | selectattr('item','equalto',gid)
+                  | first
+                  | default({})
+                ).ansible_facts.getent_group[gid][1]
+                | default('UNKNOWN', true)
+                | string
+                | trim
+              })
+          }}
+      loop: "{{ current_loop_facts.linux_extra_groups | default([]) }}"
+      loop_control:
+        loop_var: gid
+        label: "{{ gid }}"
 
 - name: Linux | Create User Accounts for {{ docker_app }}
   ansible.builtin.user:
     name: "{{ current_loop_facts.linux_users is defined and linux_user.name or '' }}"
-    comment:  "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
+    comment: "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
     groups: "{{ (extra_groups_gid_map.keys() | join(',')) | default(omit) }}"
     shell: "{{ linux_user.shell | default('/sbin/nologin') }}"
     state: "{{ current_loop_facts.state | default('present') }}"
