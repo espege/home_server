@@ -3,7 +3,7 @@ services:
     container_name: automaticrippingmachine
     image: automaticrippingmachine/automatic-ripping-machine:latest
     restart: always
-    privileged: true # Should run privleged as per documentation
+    privileged: true # Should run privileged as per documentation
     ports:
       - 8084:8080
     cpus: 3
@@ -22,7 +22,8 @@ services:
       - ARM_UID={{ docker_app_users.results[0].uid }}
       - ARM_GID={{ extra_groups_gid_map['Media'] }}
       - TZ={{ time_zone }}
+      - PATH=/usr/bin/HandBrakeCLI:${PATH} # I need this only for troubleshooting
     devices:
       - "/dev/sr0:/dev/sr0" # Copied verbatim from makemkv config
-      - "/dev/sg7:/dev/sg7" # Copied verbatim from makemkv config
+      # - "/dev/sg7:/dev/sg7" # Copied verbatim from makemkv config # Commented out for troubleshooting
       - /dev/dri # For hardware acceleration, if available

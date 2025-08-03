@@ -41,7 +41,7 @@
 
     - name: Ansible | Set Fact | Remote Compose Directory | {{ docker_app }} # Selects from custom_destination or default bind path for remote
       ansible.builtin.set_fact:
-        remote_directory: "{{ current_loop_facts['custom_destination'] is defined | ternary(current_loop_facts['custom_destination'], docker_compose_generator_default_bind_path) }}"
+        remote_directory: "{{ current_loop_facts['custom_destination'] | default(docker_compose_generator_default_bind_path) }}"
 
     - name: Ansible | Set Fact | Helper Facts | {{ docker_app }}
       ansible.builtin.set_fact:
@@ -51,7 +51,7 @@
 
     - name: Ansible | Set Fact | Docker Compose Content | {{ docker_app }}
       ansible.builtin.set_fact:
-        docker_compose_contents: "{{ lookup('ansible.builtin.template', '{{ docker_compose_generator_docker_app_directory }}/{{ docker_app }}/docker-compose.yaml.j2') | from_yaml }}"
+        docker_compose_contents: "{{ lookup('ansible.builtin.template', docker_compose_generator_docker_app_directory + '/' + docker_app + '/docker-compose.yaml.j2') | from_yaml }}"
 
     - name: Ansible | Set Fact | Local Compose Facts | {{ docker_app }} # Overwrite if local_compose_output is defined
       ansible.builtin.set_fact:

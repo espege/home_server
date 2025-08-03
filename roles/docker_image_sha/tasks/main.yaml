@@ -3,7 +3,7 @@
   ansible.builtin.assert:
     that:
       - docker_image is string
-      - docker_image | regex_search('^([^:]+):(.+)$')
+      - (docker_image | regex_search('^([^:]+):(.+)$')) is truthy
     quiet: true
     msg: "docker_image must be a string in the format 'repository:tag', got '{{ docker_image }}'"
 

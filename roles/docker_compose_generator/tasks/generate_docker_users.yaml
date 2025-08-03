@@ -41,14 +41,11 @@
       loop_var: gid
       label: "{{ gid }}"
 
-  - name: Debug all extra group GIDs
-    debug: var=extra_groups_gid_map
-
 - name: Linux | Create User Accounts for {{ docker_app }}
   ansible.builtin.user:
     name: "{{ current_loop_facts.linux_users is defined and linux_user.name or '' }}"
     comment:  "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
-    groups: "{{ (extra_groups_gid_map is defined and extra_groups_gid_map | length > 0) | ternary(extra_groups_gid_map.keys() | join(','), omit) }}"
+    groups: "{{ (extra_groups_gid_map.keys() | join(',')) | default(omit) }}"
     shell: "{{ linux_user.shell | default('/sbin/nologin') }}"
     state: "{{ current_loop_facts.state | default('present') }}"
   register: docker_app_users

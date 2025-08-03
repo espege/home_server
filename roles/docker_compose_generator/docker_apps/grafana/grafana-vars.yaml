@@ -1,0 +1,9 @@
+state: present
+connect_to_traefik: false
+local_compose_output: true # Output to local machine
+host_port: 12441
+docker_port: 12441
+images:
+  alloy:
+    name: grafana/alloy
+    tag: latest

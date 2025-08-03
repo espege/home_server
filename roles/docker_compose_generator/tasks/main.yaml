@@ -17,7 +17,7 @@
         - docker_compose_generator_default_local_compose_output is defined
         - docker_compose_generator_default_local_compose_output
         - docker_compose_generator_default_local_compose_output_path is defined
-        - docker_compose_generator_default_local_compose_output_path
+        - docker_compose_generator_default_local_compose_output_path != ""
 
     - name: Install Docker and Docker Compose
       ansible.builtin.include_tasks:

@@ -1,16 +1,4 @@
 ---
-- name: Linux | Accounts | Create Docker service accounts
-  ansible.builtin.include_role:
-    name: linux_user
-  vars:
-    linux_user_default_login_shell: "/usr/sbin/nologin"
-    linux_user_system_user: true
-    linux_user_vars_file_name: "{{ 'docker_' + docker_app }}"
-  loop: "{{ docker_apps | default([]) }}"
-  loop_control:
-    label: "{{ docker_app }}"
-    loop_var: docker_app
-
 - name: Load users ands groups variables
   ansible.builtin.include_vars:
     dir: '../vars'
@@ -20,7 +8,7 @@
   ansible.builtin.group:
     name: "{{ item }}"
   loop:
-    "{{ mandatory_groups | default([]) }}"
+    "{{ mandatory_groups | default([]) }}" # playbooks/vars/linux_groups.yaml
   tags: groups
 
 - name: Linux | Users | Create all required users
@@ -30,7 +18,7 @@
     groups: "{{ linux_user.groups }}"
     append: true
     shell: "{{ linux_user.shell | default('/bin/bash') }}"
-  loop: "{{ users.values() }}"
+  loop: "{{ users.values() }}" # playbooks/vars/linux_users.yaml
   loop_control:
     label: "{{ linux_user.name }}"
     loop_var: 'linux_user'

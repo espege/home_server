@@ -11,7 +11,9 @@
     reference_compose_path: "{{ generated_template.results | selectattr('dest', 'defined') | select('search', 'docker-compose.yaml') | map(attribute='dest') | list | first }}"
   delegate_to: localhost
   become: false
-  when: docker_image is string and docker_image | regex_search('^([^:]+):(.+)$')
+  when:
+    - docker_image is string
+    - (docker_image | regex_search('^([^:]+):(.+)$')) is truthy
 
 - name: Replace image with SHA in compose.yaml | {{ docker_app }}
   ansible.builtin.lineinfile:
