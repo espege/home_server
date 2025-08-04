@@ -20,8 +20,8 @@ services:
     networks:
      - semaphore
     environment:
-      - TZ={{ docker_compose_generator_default_time_zone }}
-      - SEMAPHORE_DB_USER: {{ semaphore.semaphore_postgres_user | default('semaphore') }}
+      - TZ = {{ docker_compose_generator_default_time_zone }}
+      - SEMAPHORE_DB_USER = {{ semaphore.semaphore_postgres_user | default('semaphore') }}
       - SEMAPHORE_DB_PASS = {{ semaphore.semaphore_postgres_pwd }}
       - SEMAPHORE_DB_HOST = postgres
       - SEMAPHORE_DB_PORT = 5432

@@ -18,7 +18,7 @@
 
   - name: Get latest image digest from Docker Hub | {{ docker_image_sha_ref }}:{{ docker_image_sha_image_tag }}
     ansible.builtin.uri:
-      url: "https://{{ docker_hub_host }}/v2/repositories/{{ docker_image_sha_ref }}/tags/{{ docker_image_sha_image_tag }}"
+      url: "https://{{ docker_image_sha_docker_hub_host }}/v2/repositories/{{ docker_image_sha_ref }}/tags/{{ docker_image_sha_image_tag }}"
       method: GET
       return_content: true
     register: tag_info

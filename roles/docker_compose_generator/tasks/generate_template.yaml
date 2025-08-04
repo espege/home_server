@@ -79,16 +79,13 @@
         file: 'generate_networks.yaml'
       loop: "{{ docker_compose_contents.networks | default({}) | dict2items | selectattr('value.external', 'defined') | selectattr('value.external', 'equalto', true) }}"
       loop_control:
-        label: "{{ external_network.value.name }}"
+        label: "{{ external_network.value.name | default(external_network.key) }}"
         loop_var: 'external_network'
       when:
         - current_loop_facts['connect_to_traefik'] is defined
         - current_loop_facts['connect_to_traefik'] | default(false) is true
         - docker_apps_folders is defined
         - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
-
-    - ansible.builtin.fail:
-        msg: "end"
 
     - name: Generate templated files | {{ docker_app }}
       ansible.builtin.template:
