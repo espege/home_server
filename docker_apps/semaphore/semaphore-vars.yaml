@@ -2,3 +2,4 @@
 state: present
 connect_to_traefik: true
 backup_volume: true
+local_compose_output: true
