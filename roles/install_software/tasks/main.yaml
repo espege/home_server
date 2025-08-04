@@ -1,22 +1,22 @@
 ---
 - name: Update and packages list
   become: true
-  apt:
-    update_cache: yes
-    cache_valid_time: 86400 #One day
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 86400 # One day
   tags:
     - apt_upgrade
 
 - name: Install package
   ansible.builtin.apt:
-    name: "{{item.package}}"
+    name: "{{ item.package }}"
     state: "{{ item.state | default(omit) }}"
   loop: "{{ software }}"
   when: item.package != None
 
 - name: Make sure daemon is running
   ansible.builtin.systemd:
-    name: "{{item.package}}"
+    name: "{{ item.package }}"
     state: started
     enabled: "{{ item.enabled | default(omit) }}"
   loop: "{{ software }}"

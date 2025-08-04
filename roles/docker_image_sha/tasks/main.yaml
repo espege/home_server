@@ -13,12 +13,12 @@
   block:
   - name: Input | Split docker image into name and tag {{ docker_image }}
     ansible.builtin.set_fact:
-      docker_image_ref: "{{ (docker_image | split(':'))[0] }}"
-      docker_image_tag: "{{ (docker_image | split(':'))[-1] }}"
+      docker_image_sha_ref: "{{ (docker_image | split(':'))[0] }}"
+      docker_image_sha_image_tag: "{{ (docker_image | split(':'))[-1] }}"
 
-  - name: Get latest image digest from Docker Hub | {{ docker_image_ref }}:{{ docker_image_tag }}
+  - name: Get latest image digest from Docker Hub | {{ docker_image_sha_ref }}:{{ docker_image_sha_image_tag }}
     ansible.builtin.uri:
-      url: "https://{{ docker_hub_host }}/v2/repositories/{{ docker_image_ref }}/tags/{{ docker_image_tag }}"
+      url: "https://{{ docker_hub_host }}/v2/repositories/{{ docker_image_sha_ref }}/tags/{{ docker_image_sha_image_tag }}"
       method: GET
       return_content: true
     register: tag_info

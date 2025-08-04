@@ -73,7 +73,6 @@
         label: "{{ docker_volume }}"
         loop_var: 'docker_volume'
 
-
     # If traefik is among docker apps and connect_to_traefik, add current app external networks
     - name: Docker Networks | Add external networks to Traefik | {{ docker_app }}
       ansible.builtin.include_tasks:
@@ -84,9 +83,12 @@
         loop_var: 'external_network'
       when:
         - current_loop_facts['connect_to_traefik'] is defined
-        - current_loop_facts['connect_to_traefik']
-        # - docker_apps_folders is defined
-        # - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
+        - current_loop_facts['connect_to_traefik'] | default(false) is true
+        - docker_apps_folders is defined
+        - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
+
+    - ansible.builtin.fail:
+        msg: "end"
 
     - name: Generate templated files | {{ docker_app }}
       ansible.builtin.template:
@@ -106,7 +108,7 @@
     - name: Docker-Compose | Replace images tags with SHA | {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'get_latest_image_hash.yaml'
-      loop: "{{ docker_compose_contents.services | dict2items | selectattr ('value.image', 'defined') | map(attribute='value.image') | flatten }}"
+      loop: "{{ docker_compose_contents.services | dict2items | selectattr('value.image', 'defined') | map(attribute='value.image') | flatten }}"
       loop_control:
         label: "{{ docker_image }}"
         loop_var: 'docker_image'

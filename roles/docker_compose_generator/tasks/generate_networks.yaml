@@ -2,9 +2,6 @@
 - name: Traefik networks | Create external networks
   delegate_to: localhost
   become: false
-  when:
-    - current_loop_facts['connect_to_traefik'] is defined
-    - current_loop_facts['connect_to_traefik']
   tags:
     - traefik_networks
   block:

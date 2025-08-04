@@ -17,7 +17,7 @@
 
 - name: Replace image with SHA in compose.yaml | {{ docker_app }}
   ansible.builtin.lineinfile:
-    line: "    image: {{ docker_image_ref }}@{{ tag_info.json.digest }}"
+    line: "    image: {{ docker_image_sha_ref }}@{{ tag_info.json.digest }}"
     path: "{{ reference_compose_path }}"
     search_string: "{{ docker_image }}"
   delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
