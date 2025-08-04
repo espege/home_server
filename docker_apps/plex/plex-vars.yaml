@@ -1,6 +1,7 @@
 ---
 state: present
 local_compose_output: true  # Output to local machine
+connect_to_traefik: true
 linux_users:
   - name: plex
     comment: 'Plex Media Server service account | Created by ansible'

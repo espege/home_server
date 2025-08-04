@@ -1,0 +1,4 @@
+---
+state: present
+connect_to_traefik: true
+backup_volume: true
