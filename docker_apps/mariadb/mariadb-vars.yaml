@@ -1,0 +1,16 @@
+state: present
+connect_to_traefik: false
+local_compose_output: true # Output to local machine
+ufw:
+  - rule: allow
+    proto: tcp
+    port: "{{ digikam.maria_public_port | default('3306') }}"
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow MariaDB from local subnet
+  - rule: allow
+    proto: tcp
+    port: "{{ digikam.adminer_public_port | default('8080') }}"
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow local subnet to adminer

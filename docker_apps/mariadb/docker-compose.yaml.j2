@@ -1,0 +1,38 @@
+services:
+
+  db:
+    image: library/mariadb:latest
+    restart: always
+    networks:
+      - mariadb
+    ports:
+      - {{ digikam.maria_public_port | default('3306') }}:3306
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mariadb.rule=Host(`mariadb.{{ public_domain_name }}`) || Host(`mariadb.{{ local_domain_name }}`)
+      - traefik.http.routers.mariadb.entrypoints=web
+      - traefik.http.services.mariadb.loadbalancer.server.port=3306
+    volumes:
+      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}:/var/lib/mysql
+    environment:
+      MARIADB_USER: {{ digikam.mariadb_user | default('maria') }}
+      MARIADB_PASSWORD: {{ digikam.mariadb_password | default('changeme123') }}
+      MARIADB_ROOT_PASSWORD: {{ digikam.mariadb_root_password | default('changeme123r00t') }}
+      MARIADB_AUTO_UPGRADE: {{ digikam.mariadb_auto_upgrade | default('true')}}
+
+  adminer:
+    image: library/adminer:latest
+    networks:
+      - mariadb
+    restart: always
+    ports:
+      - {{ digikam.adminer_public_port | default('8080') }}:8080
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.mariaadmin.rule=Host(`mariaadmin.{{ public_domain_name }}`) || Host(`mariaadmin.${PRIVATE_DOMAIN_NAME}`)
+    - traefik.http.routers.mariaadmin.entrypoints=web
+    - traefik.http.services.mariaadmin.loadbalancer.server.port=8080
+
+networks:
+  mariadb:
+    driver: bridge

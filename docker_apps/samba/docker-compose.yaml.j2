@@ -1,0 +1,54 @@
+services:
+  samba:
+    image: ghcr.io/servercontainers/samba:smbd-avahi-latest
+    container_name: samba
+    ports:
+      - "445:445"
+    restart: unless-stopped
+    environment:
+      FAIL_FAST: 1
+      MODEL: 'MacSamba'
+      SAMBA_CONF_LOG_LEVEL: 3
+
+      # Global
+      SAMBA_GLOBAL_CONFIG_min_SPACE_protocol: SMB3
+      # Useeful for MacOS
+      # SAMBA_GLOBAL_CONFIG_server_SPACE_multi_SPACE_channel_SPACE_support: yes
+      # SAMBA_GLOBAL_CONFIG_aio_SPACE_write_SPACE_size: 16384
+      # SAMBA_GLOBAL_CONFIG_aio_SPACE_read_SPACE_size: 16384
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_zero_file_id: yes
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_encoding: native
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_metadata: stream
+      # Unclear benefit
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_veto_appledouble: no
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_nfs_aces: no
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_wipe_intentionally_left_blank_rfork: yes
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_delete_empty_adfiles: yes
+      # SAMBA_GLOBAL_CONFIG_fruit_COLON_posix_rename: yes
+      # User MGMT
+      GROUP_{{ docker_app_users.results[1].name | lower | default('nobody') }}: {{ docker_app_users.results[1].group | default('nogroup') }}
+      ACCOUNT_{{ docker_app_users.results[0].name | lower }}: {{ samba_config.users[0].smb_password }}
+      UID_{{ docker_app_users.results[0].name | lower }}: {{ docker_app_users.results[0].uid }}
+      GROUPS_{{ docker_app_users.results[0].name | lower }}: {{ docker_app_users.results[1].name | lower | default('nobody') }}
+      # VOLUME_MANAGEMENT
+{% for share in samba_config.shares %}
+{% filter indent(width=6, first=true) %}
+{{ share.key }}: |
+{% filter indent(width=2, first=true) %}
+[{{ share.name }}]
+path = {{ share.path }}
+browsable = yes
+writable = yes
+read only = no
+guest ok = no
+valid users = {{ share.valid_users }}
+force group = {{ share.force_group }}
+create mask = 4660
+directory mask = 4770
+veto files = {{ share.veto_files | default('') }}
+delete veto files = {{ share.delete_veto_files | default('no') }}
+{% endfilter %}
+{% endfilter %}
+{% endfor %}
+    volumes:
+      - /{{ zfs_pool_name }}/{{ onedrive_config.directory_name }}/Pictures/:/shares/onedrive_photos:rw

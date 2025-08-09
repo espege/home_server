@@ -1,0 +1,14 @@
+---
+state: present
+# docker_compose_run: true
+local_compose_output: true
+connect_to_traefik: true
+linux_users:
+  "{{ samba_config.users | default([{\"name\":\"bob\",\"password\":\"placeholder\"}]) }}"
+ufw:
+  - rule: allow
+    proto: tcp
+    port: 445
+    from_ip: "{{ local_subnet_range }}"
+    to_ip: "{{ ansible_host }}"
+    comment: Allow SMB from local domain
