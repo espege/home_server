@@ -7,18 +7,84 @@
     quiet: true
     msg: "docker_image must be a string in the format 'repository:tag', got '{{ docker_image }}'"
 
+- name: Facts | Initialize registry_result
+  ansible.builtin.set_fact:
+    useful_digest: ""
+
 - name: Docker | Get latest image digest
   delegate_to: localhost
   become: false
   block:
+
+    - name: Detect host architecture
+      ansible.builtin.setup:
+        gather_subset:
+          - hardware
+      register: host_facts
+      run_once: true
+
+    - name: Register host architecture variable
+      ansible.builtin.set_fact:
+        detected_architecture: "{{ host_facts.ansible_facts.ansible_architecture }}"
+      run_once: true
+
     - name: Input | Split docker image into name and tag {{ docker_image }}
       ansible.builtin.set_fact:
-        docker_image_sha_ref: "{{ (docker_image | split(':'))[0] }}"
-        docker_image_sha_image_tag: "{{ (docker_image | split(':'))[-1] }}"
+        docker_image_name: "{{ (docker_image | split(':'))[0] }}"
+        docker_image_tag: "{{ (docker_image | split(':'))[-1] }}"
+        docker_image_registry_tentative: "{{ (docker_image | split('/')) }}"
+        docker_registry: "{{ docker_image_sha_docker_hub_host }}"
 
-    - name: Get latest image digest from Docker Hub | {{ docker_image_sha_ref + ':' + docker_image_sha_image_tag }}
-      ansible.builtin.uri:
-        url: "https://{{ docker_image_sha_docker_hub_host }}/v2/repositories/{{ docker_image_sha_ref }}/tags/{{ docker_image_sha_image_tag }}"
-        method: GET
-        return_content: true
-      register: tag_info
+    - name: Fact | Update Docker Registry # ex: ghcr.io/servercontainers/samba:smbd-avahi-latest
+      ansible.builtin.set_fact:
+        docker_registry: "{{ docker_image_registry_tentative[0] }}"
+      when: docker_image_registry_tentative | length > 2
+
+    - name: docker.io
+      when: '"docker" in docker_registry'
+      block:
+      - name: Get latest image digest from Docker Hub | {{ docker_image_name + ':' + docker_image_tag }}
+        ansible.builtin.uri:
+          url: "https://{{ docker_registry }}/v2/repositories/{{ docker_image_name }}/tags/{{ docker_image_tag }}"
+          method: GET
+          return_content: true
+        register: tag_info
+        when: '"registry.hub.docker" in docker_registry'
+
+      - name: Extract docker.io generic digest
+        set_fact:
+          useful_digest: >-
+            "{{ tag_info.json.digest }}"
+
+    - name: GHCR.io
+      when: '"ghcr.io" in docker_registry'
+      block:
+      - name: Get ghcr.io token
+        ansible.builtin.uri:
+          url: "https://ghcr.io/token?service=ghcr.io&scope=repository:{{ docker_image_name }}:pull"
+          method: GET
+          url_username: "{{ github_config.username }}"
+          url_password: "{{ github_config.package_token }}"
+          force_basic_auth: true
+          return_content: true
+        register: ghcr_token_response
+
+      - name: Get latest image tag from GitHub Container Registry | {{ docker_image_name + ':' + docker_image_tag }}
+        ansible.builtin.uri:
+          url: "https://ghcr.io/v2/{{ docker_image_name }}/manifests/{{ docker_image_tag }}"
+          method: GET
+          headers:
+            Authorization: "Bearer {{ ghcr_token_response.json.token }}"
+            Accept: "Application/vnd.oci.image.index.v1+json"
+          return_content: true
+        register: tag_info
+
+      - name: Extract GHCR.io digest for linux/{{ detected_architecture }}
+        set_fact:
+          useful_digest: >-
+            {{ (tag_info.json.manifests | selectattr('platform.architecture', 'equalto', detected_architecture) | selectattr('platform.os', 'equalto', 'linux') | list | first).digest | default('') }}
+
+    - name: Fail for notimplemented registries
+      ansible.builtin.fail:
+        msg: "Only Docker Hub (docker.io) is supported. Failed to check {{ docker_registry }}"
+      when: tag_info is not defined

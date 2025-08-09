@@ -7,7 +7,6 @@
 
   vars_files:
     - vars/docker.yaml
-    - vars/networking.yaml
     - vars/sensitive/docker-sensitive.yaml
     - vars/ufw_rules.yaml
     - vars/volumes.yaml
@@ -34,6 +33,14 @@
         - zfs
         - storage_pool
 
+    # Creates port 22 rule for SSH to ansible_host
+    - name: Ubuntu | Firewall | SSH Firewall config
+      ansible.builtin.include_role:
+        name: ufw_config
+      vars:
+        ufw_config_ruleset: "{{ local_subnet_ufw }}"
+      tags: firewall
+
     - name: Docker | Create Compose file
       ansible.builtin.include_role:
         name: docker_compose_generator
@@ -43,10 +50,3 @@
       vars:
         docker_compose_generator_default_bind_path: "{{ preferred_docker_app_path | default(omit) }}"
         docker_compose_generator_default_local_compose_output_path: "{{ local_dir_for_docker_compose_repo | default(omit) }}"
-
-    - name: Ubuntu | Firewall | SSH Firewall config
-      ansible.builtin.include_role:
-        name: ufw_config
-      vars:
-        ufw_config_ruleset: "{{ local_subnet_ufw }}"
-      tags: firewall
