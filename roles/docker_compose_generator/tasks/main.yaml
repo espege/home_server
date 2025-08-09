@@ -46,6 +46,10 @@
       delegate_to: localhost
       register: docker_apps_folders
 
+    - name: Get ansible host Architecture details # Required for tag to digest conversion
+      ansible.builtin.include_tasks:
+        file: 'detect_architecture.yaml'
+
     - name: Generate Docker Compose files
       ansible.builtin.include_tasks:
         file: 'generate_template.yaml'

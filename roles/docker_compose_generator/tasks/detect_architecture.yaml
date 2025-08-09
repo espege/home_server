@@ -1,0 +1,23 @@
+---
+# These tasks are prerequisites for the replacement of docker tags with digests
+
+- name: Detect host architecture
+  ansible.builtin.setup:
+    gather_subset:
+      - hardware
+  register: host_facts
+  run_once: true
+
+- name: Register host architecture variable
+  ansible.builtin.set_fact:
+    detected_architecture_docker: >-
+      {% if host_facts.ansible_facts.ansible_architecture == 'x86_64' %}
+      amd64
+      {% elif host_facts.ansible_facts.ansible_architecture == 'aarch64' %}
+      arm64
+      {% elif host_facts.ansible_facts.ansible_architecture.startswith('arm') %}
+      arm
+      {% else %}
+      {{ host_facts.ansible_facts.ansible_architecture }}
+      {% endif %}
+  run_once: true

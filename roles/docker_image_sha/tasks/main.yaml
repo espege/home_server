@@ -16,18 +16,6 @@
   become: false
   block:
 
-    - name: Detect host architecture
-      ansible.builtin.setup:
-        gather_subset:
-          - hardware
-      register: host_facts
-      run_once: true
-
-    - name: Register host architecture variable
-      ansible.builtin.set_fact:
-        detected_architecture: "{{ host_facts.ansible_facts.ansible_architecture }}"
-      run_once: true
-
     - name: Input | Split docker image into name and tag {{ docker_image }}
       ansible.builtin.set_fact:
         docker_image_name: "{{ (docker_image | split(':'))[0] }}"
@@ -79,10 +67,10 @@
             return_content: true
           register: tag_info
 
-        - name: Extract GHCR.io digest for linux/{{ detected_architecture }}
+        - name: Extract GHCR.io digest for linux/{{ detected_architecture_docker | trim }}
           ansible.builtin.set_fact:
             useful_digest: >-
-              {{ (tag_info.json.manifests | selectattr('platform.architecture', 'equalto', detected_architecture) | selectattr('platform.os', 'equalto', 'linux') | list | first).digest | default('') }}
+              {{ (tag_info.json.manifests | selectattr('platform.architecture', 'equalto', detected_architecture_docker | trim) | selectattr('platform.os', 'equalto', 'linux') | list | first).digest | default('') }}
 
     - name: Fail for notimplemented registries
       ansible.builtin.fail:
