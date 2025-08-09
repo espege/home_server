@@ -4,9 +4,9 @@ services:
     image: library/postgres:14
     hostname: postgres
     networks:
-     semaphore:
+     - semaphore
     volumes:
-     - semaphore-postgres:/var/lib/postgresql/data
+     -  {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}:/var/lib/postgresql/data
     environment:
      POSTGRES_USER: {{ semaphore.semaphore_postgres_user | default('semaphore') }}
      POSTGRES_PASSWORD: {{ semaphore.semaphore_postgres_pwd }}
@@ -20,23 +20,23 @@ services:
     networks:
      - semaphore
     environment:
-      - TZ = {{ docker_compose_generator_default_time_zone }}
-      - SEMAPHORE_DB_USER = {{ semaphore.semaphore_postgres_user | default('semaphore') }}
-      - SEMAPHORE_DB_PASS = {{ semaphore.semaphore_postgres_pwd }}
-      - SEMAPHORE_DB_HOST = postgres
-      - SEMAPHORE_DB_PORT = 5432
-      - SEMAPHORE_DB_DIALECT = postgres
-      - SEMAPHORE_DB = semaphore
-      - SEMAPHORE_PLAYBOOK_PATH = /tmp/semaphore/
-      - SEMAPHORE_ADMIN_PASSWORD = {{ semaphore.semaphore_admin_password }}
-      - SEMAPHORE_ADMIN_NAME = {{ semaphore.semaphore_admin_user | default('admin') }}
-      - SEMAPHORE_ADMIN_EMAIL = {{ semaphore.semaphore_admin_user | default('admin') }}@localhost
-      - SEMAPHORE_ADMIN = {{ semaphore.semaphore_admin_user | default('admin') }}
-      - SEMAPHORE_ACCESS_KEY_ENCRYPTION = {{ semaphore.sempahore_encryption_key}}
-      - SEMAPHORE_SSH_PORT = 22 # Used to connect to host
-      - SEMAPHORE_SSH_HOST = {{ ansible_host }}
+      TZ: {{ docker_compose_generator_default_time_zone }}
+      SEMAPHORE_DB_USER: {{ semaphore.semaphore_postgres_user | default('semaphore') }}
+      SEMAPHORE_DB_PASS: {{ semaphore.semaphore_postgres_pwd }}
+      SEMAPHORE_DB_HOST: postgres
+      SEMAPHORE_DB_PORT: 5432
+      SEMAPHORE_DB_DIALECT: postgres
+      SEMAPHORE_DB: semaphore
+      SEMAPHORE_PLAYBOOK_PATH: /tmp/semaphore/
+      SEMAPHORE_ADMIN_PASSWORD: {{ semaphore.semaphore_admin_password }}
+      SEMAPHORE_ADMIN_NAME: {{ semaphore.semaphore_admin_user | default('admin') }}
+      SEMAPHORE_ADMIN_EMAIL: {{ semaphore.semaphore_admin_user | default('admin') }}@localhost
+      SEMAPHORE_ADMIN: {{ semaphore.semaphore_admin_user | default('admin') }}
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: {{ semaphore.sempahore_encryption_key}}
+      SEMAPHORE_SSH_PORT: 22 # Used to connect to host
+      SEMAPHORE_SSH_HOST: {{ ansible_host }}
     extra_hosts:
-      - host.docker.internal = {{ ansible_host }}
+      - host.docker.internal:{{ ansible_host }}
     labels:
       - traefik.enable=true
       - traefik.http.routers.actual.rule=Host(`semaphore.{{ public_domain_name }}`)|Host(`semaphore.{{ local_domain_name }}`)

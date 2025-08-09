@@ -2,7 +2,7 @@ services:
   plex:
     container_name: plex
     hostname: plex
-    image: plexinc/pms-docker:public
+    image: plexinc/pms-docker:latest
     restart: unless-stopped
     networks:
       - plex
@@ -20,14 +20,14 @@ services:
     - 32413:32413/udp
     - 32414:32414/udp
     environment:
-      - TZ={{ docker_compose_generator_default_time_zone }}
-      - PLEX_CLAIM={{ plex_config.plex_claim | default('') }}
-      - ADVERTISE_IP=http://{{ ansible_host }}:32400
-      - HOSTNAME={{ plex_config.server_hostname | default('plex') }}
-      - ALLOWED_NETWORKS={{ local_subnet_range | default('192.168.0.0/24') }}
-      - CHANGE_CONFIG_DIR_OWNERSHIP=false
-      - PLEX_UID={{ docker_app_users.results[0].uid }}
-      - PLEX_GID={{ extra_groups_gid_map['Media'] }}
+      TZ: {{ docker_compose_generator_default_time_zone }}
+      PLEX_CLAIM: {{ plex_config.plex_claim | default('') }}
+      ADVERTISE_IP: http://{{ ansible_host }}:32400
+      HOSTNAME: {{ plex_config.server_hostname | default('plex') }}
+      ALLOWED_NETWORKS: {{ local_subnet_range | default('192.168.0.0/24') }}
+      CHANGE_CONFIG_DIR_OWNERSHIP: false
+      PLEX_UID: {{ docker_app_users.results[0].uid }}
+      PLEX_GID: {{ extra_groups_gid_map['Media'] }}
     labels:
       - traefik.enable=true
       - traefik.http.routers.plex.rule=Host(`plex.{{ public_domain_name }}`)
