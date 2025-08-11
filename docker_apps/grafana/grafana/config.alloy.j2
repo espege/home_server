@@ -57,7 +57,7 @@ discovery.relabel "logs_integrations_docker" {
     rule {
         source_labels = ["__meta_docker_container_name"]
         regex         = "/(.*)"
-        target_label  = "container"
+        target_label  = "container_name"
     }
 
     rule {
@@ -76,21 +76,28 @@ loki.source.docker "logs_integrations_docker" {
 
 prometheus.exporter.unix "integrations_node_exporter" {
   disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs"]
+  enable_collectors = ["meminfo", "filesystem"]
 
   filesystem {
+    // Exclude filesystem types that aren't relevant for monitoring
     fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
+    // Exclude only sensitive mount points
     mount_points_exclude = "^/(run/credentials/.+|var/lib/docker/.+)($|/)"
+    // Add host mount prefix to access host filesystems
+    // Timeout for filesystem operations
     mount_timeout        = "5s"
-    host_mount_prefix    = "/hostfs"
   }
 
   netclass {
+    // Ignore virtual and container network interfaces
     ignored_devices = "^(veth.*|cali.*|[a-f0-9]{15})$"
   }
 
   netdev {
+    // Exclude virtual and container network interfaces from device metrics
     device_exclude = "^(veth.*|cali.*|[a-f0-9]{15})$"
   }
+
 }
 
 discovery.relabel "integrations_node_exporter" {
