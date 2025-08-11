@@ -12,6 +12,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
+      - /:/hostfs:ro
+      - /proc:/hostfs/proc:ro
+      - /dev:/hostfs/dev:ro
+      - /mnt:/hostfs/mnt:ro
     ports:
       - "{{ current_loop_facts['docker_port']  }}:{{ current_loop_facts['docker_port'] }}"
     command: >
