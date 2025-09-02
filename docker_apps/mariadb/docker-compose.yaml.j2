@@ -29,7 +29,7 @@ services:
       - {{ digikam.adminer_public_port | default('8080') }}:8080
     labels:
     - traefik.enable=true
-    - traefik.http.routers.mariaadmin.rule=Host(`mariaadmin.{{ public_domain_name }}`) || Host(`mariaadmin.${PRIVATE_DOMAIN_NAME}`)
+    - traefik.http.routers.mariaadmin.rule=Host(`mariaadmin.{{ public_domain_name }}`) || Host(`mariaadmin.{{ local_domain_name }}`)
     - traefik.http.routers.mariaadmin.entrypoints=web
     - traefik.http.services.mariaadmin.loadbalancer.server.port=8080
 
