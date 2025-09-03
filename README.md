@@ -2,6 +2,10 @@
 
 This repository configures my home server Ubuntu server.
 
+## Compatibility
+
+These playbooks and roles have been tested with ansible core 2.19
+
 Two core playbooks exist:
 
 ## initial_config.yml
