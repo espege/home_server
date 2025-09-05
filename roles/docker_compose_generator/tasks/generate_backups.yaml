@@ -1,0 +1,32 @@
+# Generate a backup script and cron job to run it weekly
+---
+
+
+- name: Conditional execution - Only if backup_volumes is defined and has items
+  when:
+    - current_loop_facts.backup_volumes is defined
+    - current_loop_facts.backup_volumes | length > 0
+  block:
+  - name: Set fact - Combined list of backup volumes
+    ansible.builtin.set_fact:
+      combined_backup_volumes: "{{ current_loop_facts.backup_volumes | default([]) | join(' ')}}"
+
+  - name: Copy Docker Backup Script
+    ansible.builtin.template:
+      src: docker_backup.sh.j2
+      dest: "{{ (docker_compose_generator_default_backup_destination_dir + '/docker_backup_' + docker_app + '.sh') | regex_replace('\\.j2$', '') }}"
+      mode: '0754'
+      owner: root
+      group: root
+    register: copy_backup_script_result
+    when: current_loop_facts.state is defined and current_loop_facts.state == "present"
+
+  - name: Creates a cron file under /etc/cron.d
+    ansible.builtin.cron:
+      state: "{{ current_loop_facts.state | default('present') }}"
+      name: docker app backups for {{ docker_app }}
+      weekday: "2"
+      minute: "{{ 59 | random(seed=inventory_hostname) }}"
+      hour: "12"
+      user: root
+      job: "{{ copy_backup_script_result.dest }}"

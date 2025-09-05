@@ -27,6 +27,7 @@ Expected keys:
 | bind_vol_owner      | string   | plex   | valid user name | override root as default owner for `dict` bind volumes |
 | bind_vol_group_is_extra | bool | true | [True, False]  | override root as default group for `dict` bind volumes |
 | ufw      | list(map)   |  {rule: allow, proto: tcp[...]}  | `ufw_config` role inputs | Manage app-specific UFW rules |
+| backup_volumes      | list(string)   |  ["path/to/volume"]  | Specific Docker Volume paths | Adds a cron job to backup these volumes |
 
 ### xyz-vars.yaml variables and outcomes for `local_compose_output` and `connect_to_traefik`
 

@@ -1,0 +1,56 @@
+#!/bin/bash
+
+DESTINATION_DIR="/{{ zfs_pool_name }}/{{ onedrive_config.directory_name | default('OneDrive') }}/Backups"
+LOG_DESTINATION="/var/log/docker_backup.log"
+FINAL_USER="onedrive"
+FINAL_GROUP="onedrive"
+BACKUP_BACKUP_PATHS="{{ combined_backup_volumes | default('') }}"
+
+function run_backup() {
+    BACKUP_PATH=$1
+    if [ ! $BACKUP_PATH ]; then
+        echo "No path provided for backup. Exiting."
+        return 1
+    fi
+    if [ ! -d "$DESTINATION_DIR" ]; then
+        echo "Destination directory $DESTINATION_DIR does not exist. Creating it..."
+        mkdir -p "$DESTINATION_DIR"
+        chown "${FINAL_USER}":"${FINAL_USER}" "$DESTINATION_DIR"
+    fi
+    tar -czvf "$DESTINATION_DIR/docker_backup_$(basename "$BACKUP_PATH")_$(date +%Y%m%d).tar.gz" "$BACKUP_PATH" >> /var/log/docker_backup.log 2>&1
+    if [ $? -ne 0 ]; then
+        echo "Error during backup of $BACKUP_PATH. Check the log at $LOG_DESTINATION for details."
+        return 1
+    else
+        echo "Backup of $BACKUP_PATH completed successfully."
+    fi
+}
+
+function set_owner() {
+    chown -R "${FINAL_USER}":"${FINAL_GROUP}" "$DESTINATION_DIR"
+}
+
+function cleanup_old_backups() {
+    find "$DESTINATION_DIR" -type f -name "docker_backup_*.tar" -mtime +30 -exec rm {} \;
+}
+
+function log_output() {
+    BACKUP_PATH=$1
+    if [ ! $BACKUP_PATH ]; then
+        echo "No path provided for backup. Exiting."
+        return 1
+    fi
+    echo "Backup completed on $(date) for $(basename "$BACKUP_PATH")" >> $LOG_DESTINATION
+    # Cleanup
+    tail -n 1000 $LOG_DESTINATION > "${LOG_DESTINATION}.tmp" && mv "${LOG_DESTINATION}.tmp" $LOG_DESTINATION
+}
+
+# MAIN
+
+cleanup_old_backups
+
+for path in $BACKUP_BACKUP_PATHS; do
+    run_backup $path
+    log_output $path
+done
+set_owner

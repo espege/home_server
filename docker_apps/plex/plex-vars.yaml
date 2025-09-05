@@ -17,3 +17,5 @@ ufw:
     from_ip: "any"
     to_ip: "{{ ansible_host }}"
     comment: Allow plex external
+backup_volumes:
+  - "{{ docker_compose_generator_default_bind_path }}/plex"

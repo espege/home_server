@@ -131,6 +131,9 @@
     - name: Ubuntu | Backup | Detect volumes to backup for {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'generate_backups.yaml'
+      when:
+        - current_loop_facts['backup_volumes'] is defined
+        - current_loop_facts['backup_volumes'] | length > 0
 
     - name: Ubuntu | Firewall | Add rules for {{ docker_app }}
       ansible.builtin.include_role:
