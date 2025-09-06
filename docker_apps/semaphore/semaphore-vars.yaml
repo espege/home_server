@@ -1,5 +1,6 @@
 ---
 state: present
 connect_to_traefik: true
-backup_volume: true
 local_compose_output: true
+backup_volumes:
+  - "{{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/data"

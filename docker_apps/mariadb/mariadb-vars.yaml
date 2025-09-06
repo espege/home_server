@@ -14,3 +14,5 @@ ufw:
     from_ip: "{{ local_subnet_range }}"
     to_ip: "{{ ansible_host }}"
     comment: Allow local subnet to adminer
+backup_volumes:
+  - "{{ docker_compose_generator_default_bind_path }}/{{ docker_app }}"
