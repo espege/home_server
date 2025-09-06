@@ -4,7 +4,7 @@ DESTINATION_DIR="/{{ zfs_pool_name }}/{{ onedrive_config.directory_name | defaul
 LOG_DESTINATION="/var/log/docker_backup.log"
 FINAL_USER="onedrive"
 FINAL_GROUP="onedrive"
-BACKUP_BACKUP_PATHS="{{ combined_backup_volumes | default('') }}"
+BACKUP_PATHS=$1
 
 function run_backup() {
     BACKUP_PATH=$1
@@ -49,7 +49,7 @@ function log_output() {
 
 cleanup_old_backups
 
-for path in $BACKUP_BACKUP_PATHS; do
+for path in $BACKUP_PATHS; do
     run_backup $path
     log_output $path
 done
