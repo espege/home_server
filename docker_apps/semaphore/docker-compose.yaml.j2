@@ -52,4 +52,7 @@ networks:
   semaphore:
     name: semaphore
     driver: bridge
+    ipam:
+      config:
+        - subnet: "{{ (current_loop_facts.ufw | first).from_ip }}"
     external: true
