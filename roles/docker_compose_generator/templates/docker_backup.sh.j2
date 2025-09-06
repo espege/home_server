@@ -17,7 +17,7 @@ function run_backup() {
         mkdir -p "$DESTINATION_DIR"
         chown "${FINAL_USER}":"${FINAL_USER}" "$DESTINATION_DIR"
     fi
-    tar -czvf "$DESTINATION_DIR/docker_backup_$(basename "$BACKUP_PATH")_$(date +%Y%m%d).tar.gz" "$BACKUP_PATH" >> /var/log/docker_backup.log 2>&1
+    tar -czvf "$DESTINATION_DIR/docker_backup_$(basename "$BACKUP_PATH").tar.gz" "$BACKUP_PATH" >> /var/log/docker_backup.log 2>&1
     if [ $? -ne 0 ]; then
         echo "Error during backup of $BACKUP_PATH. Check the log at $LOG_DESTINATION for details."
         return 1

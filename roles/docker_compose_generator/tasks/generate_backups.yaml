@@ -1,7 +1,6 @@
 # Generate a backup script and cron job to run it weekly
 ---
 
-
 - name: Conditional execution - Only if backup_volumes is defined and has items
   when:
     - current_loop_facts.backup_volumes is defined
