@@ -4,12 +4,12 @@ DESTINATION_DIR="/{{ zfs_pool_name }}/{{ onedrive_config.directory_name | defaul
 LOG_DESTINATION="/var/log/docker_backup.log"
 FINAL_USER="onedrive"
 FINAL_GROUP="onedrive"
-BACKUP_PATHS=$1
+DOCKER_APP_NAME=$1
+BACKUP_PATHS=$2
 
-function run_backup() {
-    BACKUP_PATH=$1
-    if [ ! $BACKUP_PATH ]; then
-        echo "No path provided for backup. Exiting."
+function validate_inputs() {
+    if [ -z "$BACKUP_PATHS" ]; then
+        echo "No input path provided to backup. Exiting."
         return 1
     fi
     if [ ! -d "$DESTINATION_DIR" ]; then
@@ -17,40 +17,41 @@ function run_backup() {
         mkdir -p "$DESTINATION_DIR"
         chown "${FINAL_USER}":"${FINAL_USER}" "$DESTINATION_DIR"
     fi
-    tar -czvf "$DESTINATION_DIR/docker_backup_$(basename "$BACKUP_PATH").tar.gz" "$BACKUP_PATH" >> /var/log/docker_backup.log 2>&1
-    if [ $? -ne 0 ]; then
-        echo "Error during backup of $BACKUP_PATH. Check the log at $LOG_DESTINATION for details."
-        return 1
-    else
-        echo "Backup of $BACKUP_PATH completed successfully."
-    fi
 }
 
-function set_owner() {
+function set_permissions() {
     chown -R "${FINAL_USER}":"${FINAL_GROUP}" "$DESTINATION_DIR"
+    chmod -R 750 "$DESTINATION_DIR"
 }
 
-function cleanup_old_backups() {
-    find "$DESTINATION_DIR" -type f -name "docker_backup_*.tar" -mtime +30 -exec rm {} \;
-}
-
-function log_output() {
-    BACKUP_PATH=$1
-    if [ ! $BACKUP_PATH ]; then
-        echo "No path provided for backup. Exiting."
+function append_to_log() {
+    MESSAGE=$1
+    if [ -z "$LOG_DESTINATION" ]; then
+        echo "No known log destination. Exiting."
         return 1
     fi
-    echo "Backup completed on $(date) for $(basename "$BACKUP_PATH")" >> $LOG_DESTINATION
+    if [ -z "$MESSAGE" ]; then
+        echo "Message is empty. Exiting."
+        return 1
+    fi
+    echo "--- $(date) --- $MESSAGE ---" >> $LOG_DESTINATION
     # Cleanup
     tail -n 1000 $LOG_DESTINATION > "${LOG_DESTINATION}.tmp" && mv "${LOG_DESTINATION}.tmp" $LOG_DESTINATION
 }
 
 # MAIN
 
-cleanup_old_backups
+validate_inputs
+append_to_log "Starting backup script for $DOCKER_APP_NAME"
 
-for path in $BACKUP_PATHS; do
-    run_backup $path
-    log_output $path
-done
-set_owner
+ARCHIVE_NAME="$DESTINATION_DIR/docker_backup_${DOCKER_APP_NAME}.tar.gz"
+tar -czvf "$ARCHIVE_NAME" $BACKUP_PATHS >> $LOG_DESTINATION 2>&1
+if [ $? -ne 0 ]; then
+    append_to_log "Error during backup of $BACKUP_PATHS. Check the log at $LOG_DESTINATION for details."
+    exit 1
+else
+    append_to_log "Backup of $BACKUP_PATHS completed successfully. Archive: $ARCHIVE_NAME"
+    echo "Successfully backup up $DOCKER_APP_NAME"
+fi
+set_permissions
+append_to_log "Finished backup script for $DOCKER_APP_NAME"

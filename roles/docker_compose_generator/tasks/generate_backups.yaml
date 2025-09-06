@@ -11,6 +11,7 @@
         combined_backup_volumes: "{{ current_loop_facts.backup_volumes | default([]) | join(' ') }}"
 
     - name: Copy Docker Backup Script
+      run_once: true
       ansible.builtin.template:
         src: docker_backup.sh.j2
         dest: "{{ (docker_compose_generator_default_backup_destination_dir + '/docker_backup.sh') | regex_replace('\\.j2$', '') }}"
@@ -25,7 +26,7 @@
         state: "{{ current_loop_facts.state | default('present') }}"
         name: docker app backup for {{ docker_app }}
         weekday: "2"
-        minute: "{{ 59 | random(seed=inventory_hostname) }}"
+        minute: "{{ 59 | random(seed=docker_app) }}"
         hour: "12"
         user: root
-        job: "{{ copy_backup_script_result.dest }} \"{{ combined_backup_volumes | default('') }}\""
+        job: "{{ copy_backup_script_result.dest }} \"{{ docker_app }}\" \"{{ combined_backup_volumes | default('') }}\""
