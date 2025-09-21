@@ -2,6 +2,7 @@ services:
   samba:
     image: ghcr.io/servercontainers/samba:smbd-avahi-latest
     container_name: samba
+    network_mode: host
     ports:
       - "445:445"
     restart: unless-stopped
