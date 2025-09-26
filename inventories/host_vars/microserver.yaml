@@ -2,3 +2,9 @@
 ansible_host: 192.168.0.50
 zfs_pool_name: micropool
 media_group: Media
+lvms:
+  staging:
+    size: 200G
+    mount_point: /qbittorrent-staging
+    filesystem: ext4
+    state: present
