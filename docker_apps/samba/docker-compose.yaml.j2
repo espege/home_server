@@ -1,3 +1,4 @@
+
 services:
   samba:
     image: ghcr.io/servercontainers/samba:smbd-avahi-latest
@@ -27,11 +28,36 @@ services:
       # SAMBA_GLOBAL_CONFIG_fruit_COLON_delete_empty_adfiles: yes
       # SAMBA_GLOBAL_CONFIG_fruit_COLON_posix_rename: yes
       # User MGMT
-      GROUP_{{ docker_app_users.results[1].name | lower | default('nobody') }}: {{ docker_app_users.results[1].group | default('nogroup') }}
-      ACCOUNT_{{ docker_app_users.results[0].name | lower }}: {{ samba_config.users[0].smb_password }}
-      UID_{{ docker_app_users.results[0].name | lower }}: {{ docker_app_users.results[0].uid }}
-      GROUPS_{{ docker_app_users.results[0].name | lower }}: {{ docker_app_users.results[1].name | lower | default('nobody') }}
-      # VOLUME_MANAGEMENT
+{# Create groups from samba_config[users] #}
+{% for user in samba_config.users %}
+{% if user.group is defined and user.group %}
+{# Add "parsed" group to user #}
+{% filter indent(width=6, first=true) %}
+{% set group_obj = docker_app_users.results | selectattr('name', 'equalto', user.group) | list | first %}
+{# Add GROUP_ #}
+{% if group_obj is defined and group_obj %}
+GROUP_{{ user.group }}: {{ group_obj.group }}
+{% endif %}
+GROUPS_{{ user.name | lower}}: {{ user.group }}
+{% endfilter %}
+{% endif %}
+{% if user.static_group is defined %}
+{% filter indent(width=6, first=true) %}
+{# Add "static" group to user #}
+GROUP_{{ user.static_group.name }}: {{ user.static_group.id }}
+GROUPS_{{ user.name | lower}}: {{ user.static_group.name }}
+{% endfilter %}
+{% endif %}
+{% endfor %}
+
+{# Create users from samba_config[users] {name, smb_password, samba_pwd_hash, groups} #}
+{% for user in samba_config.users %}
+{% filter indent(width=6, first=true) %}
+ACCOUNT_{{ user.name | lower }}: {{ user.smb_password | default('12345' )}}
+UID_{{ user.name | lower }}: {{ docker_app_users.results[loop.index0].uid }}
+{% endfilter %}
+{% endfor %}
+{# Create SMB shares #}
 {% for share in samba_config.shares %}
 {% filter indent(width=6, first=true) %}
 {{ share.key }}: |
@@ -39,8 +65,8 @@ services:
 [{{ share.name }}]
 path = {{ share.path }}
 browsable = yes
-writable = yes
-read only = no
+writable = {{ share.writeable | default('yes') }}
+read only = {{ share.readonly | default('no') }}
 guest ok = no
 valid users = {{ share.valid_users }}
 force group = {{ share.force_group }}
@@ -53,4 +79,4 @@ delete veto files = {{ share.delete_veto_files | default('no') }}
 {% endfor %}
     volumes:
       - /{{ zfs_pool_name }}/{{ onedrive_config.directory_name }}/Pictures/:/shares/onedrive_photos:rw
-      - {{ lvms['staging'].mount_point }}/automatic_ripping_machine/media/:/shares/arm:r
+      - {{ lvms['staging'].mount_point }}/automatic_ripping_machine/media/:/shares/arm:rw

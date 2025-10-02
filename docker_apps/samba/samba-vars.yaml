@@ -1,6 +1,5 @@
 ---
 state: present
-# docker_compose_run: true
 local_compose_output: true
 connect_to_traefik: true
 linux_users:
