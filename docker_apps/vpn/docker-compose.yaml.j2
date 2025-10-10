@@ -1,0 +1,98 @@
+services:
+  vpn:
+    container_name: GlueTun-Nord
+    image: qmcgaw/gluetun:latest
+    networks:
+      - nordvpn    
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1  # Recomended if using ipv4 only
+    environment:
+      VPN_SERVICE_PROVIDER: nordvpn
+      OPENVPN_USER: {{ vpn_config.VPN_SVC_USER | default('your_username') }}
+      OPENVPN_PASSWORD: {{ vpn_config.VPN_SVC_PWD | default('your_password') }}
+      SERVER_COUNTRIES: {{ vpn_config.VPN_COUNTRY | default('Argentina') }}
+      VPN_TYPE: openvpn
+      TZ: {{ docker_compose_generator_default_time_zone }}
+    ports:
+      - {{ vpn_config.GLUETUN_PORT | default(8080) }}:8080
+      - {{ vpn_config.JACKETT_PORT | default(9117) }}:9117
+    restart: always
+
+  qbittorrent-nox:
+    network_mode: container:GlueTun-Nord
+    container_name: qbittorrent-nox
+    image: qbittorrentofficial/qbittorrent-nox:{{ vpn_config.QBT_VERSION | default('latest') }}
+    environment:
+      PUID: {{ docker_app_users.results[0].uid }}
+      PGID: {{ extra_groups_gid_map['Media'] }}
+      QBT_LEGAL_NOTICE: {{ vpn_config.QBT_EULA | default('confirm') }}
+      QBT_VERSION: {{ vpn_config.QBT_VERSION | default('latest') }}
+      QBT_WEBUI_PORT: {{ vpn_config.QBT_WEBUI_PORT | default('8080') }}
+      TZ: {{ docker_compose_generator_default_time_zone }}
+      UMASK: 002
+    read_only: false # not compatible with changing UID/GID
+    stop_grace_period: 30m
+    tmpfs:
+      - /tmp
+    tty: true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.torrent.rule=Host(`torrent.{{ public_domain_name }}`) || Host(`torrent.{{ local_domain_name }}`)
+      - traefik.http.services.torrent.loadbalancer.server.port=8080
+      - traefik.http.routers.torrent.entrypoints=websecure
+      - traefik.http.routers.torrent.tls=true
+      - traefik.http.routers.torrent.tls.certresolver=le
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.entrypoints.middlewares=redirect-to-https
+
+    volumes:
+      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/qbittorrent-nox/config:/config
+      - type: bind
+        source: /{{ lvms.staging.mount_point }}/{{ vpn_config.DOWNLOADS_PATH | default('/downloads') }}
+        target: /downloads
+      - type: bind
+        source: /{{ lvms.staging.mount_point }}/{{ vpn_config.COMPLETE_PATH | default('/complete') }}
+        target: /completed_torrents
+      - type: bind
+        source: /{{ lvms.staging.mount_point }}/{{ vpn_config.INCOMPLETE_PATH | default('/torrents') }}
+        target: /incomplete_torrents
+      - /{{ zfs_pool_name }}/Videos/TV:/media/{{ vpn_config.TV_DIR }}
+      - /{{ zfs_pool_name }}/Videos/Films:/media/{{ vpn_config.MOVIES_DIR }}
+      - /{{ zfs_pool_name }}/Musique:/media/{{ vpn_config.MUSIC_DIR }}
+    depends_on:
+      vpn:
+        condition: service_healthy
+      jackett:
+        condition: service_started
+
+  jackett:
+    network_mode: container:GlueTun-Nord
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.jackett.rule=Host(`jackett.{{ public_domain_name }}`) || Host(`jackett.{{ local_domain_name }}`)
+      - traefik.http.services.jackett.loadbalancer.server.port={{ vpn_config.JACKETT_PORT }}
+      - traefik.http.routers.jackett.entrypoints=websecure
+      - traefik.http.routers.jackett.tls=true
+    environment:
+      PUID: {{ docker_app_users.results[0].uid }}
+      PGID: {{ extra_groups_gid_map['Media'] }}
+      TZ: {{ docker_compose_generator_default_time_zone }}
+      AUTO_UPDATE: true #optional
+      RUN_OPTS: #optional
+    volumes:
+      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/jackett/data:/config
+      - /{{ lvms.staging.mount_point }}/{{ vpn_config.DOWNLOADS_PATH | default('/downloads') }}
+    restart: unless-stopped
+    depends_on:
+      - vpn
+      
+networks: 
+  nordvpn:
+    name: nordvpn
+    driver: bridge
+    external: true
+    

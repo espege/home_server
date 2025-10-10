@@ -1,0 +1,19 @@
+---
+state: present
+connect_to_traefik: true
+local_compose_output: true
+ufw:
+  - rule: allow
+    proto: tcp
+    port: 22
+    from_ip: '172.30.0.0/16'
+    to_ip: "{{ ansible_host }}"
+    comment: Allow semaphore to SSH
+linux_users:
+  - name: qbittorrent-nox
+    comment: 'qbittorrent-nox service account | Created by ansible'
+    shell: /usr/sbin/nologin
+linux_extra_groups:
+  - Media
+bind_vol_owner: nordvpn
+bind_vol_group_is_extra: true
