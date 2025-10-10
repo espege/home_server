@@ -79,4 +79,4 @@ delete veto files = {{ share.delete_veto_files | default('no') }}
 {% endfor %}
     volumes:
       - /{{ zfs_pool_name }}/{{ onedrive_config.directory_name }}/Pictures/:/shares/onedrive_photos:rw
-      - {{ lvms['staging'].mount_point }}/automatic_ripping_machine/media/:/shares/arm:rw
+      - /{{ lvms['staging'].mount_point }}/automatic_ripping_machine/media/:/shares/arm:rw
