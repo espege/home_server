@@ -5,6 +5,6 @@ media_group: Media
 lvms:
   staging:
     size: 200G
-    mount_point: /qbittorrent-staging
+    mount_point: qbittorrent-staging
     filesystem: ext4
     state: present

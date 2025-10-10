@@ -48,7 +48,7 @@ services:
       - type: bind
         source: /{{ zfs_pool_name }}/Videos/Famille
         target: /media/family
-      - {{ lvms['staging'].mount_point }}/downloads:/media/staged-torrents:ro
+      - /{{ lvms['staging'].mount_point }}/downloads:/media/staged-torrents:ro
 
 networks:
   plex:

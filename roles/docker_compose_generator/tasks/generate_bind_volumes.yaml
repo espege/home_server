@@ -49,11 +49,11 @@
         - name: Ansible | Convert .j2 files in temp dir
           ansible.builtin.template:
             src: "{{ item.path }}"
-            dest: "{{ item.path | regex_replace('\\.j2$', '') }}"
+            dest: "{{ item.path | regex_replace('\\.j2$', '') | basename }}"
             mode: "0770"
           loop: "{{ temp_j2_files.files }}"
           loop_control:
-            label: "{{ item.path | regex_replace('\\.j2$', '') }}"
+            label: "{{ item.path | regex_replace('\\.j2$', '') | basename }}"
           when: temp_j2_files is defined and temp_j2_files.files | length > 0
           changed_when: false
 
@@ -63,7 +63,7 @@
             state: absent
           loop: "{{ temp_j2_files.files }}"
           loop_control:
-            label: "{{ item.path }}"
+            label: "{{ item.path | basename }}"
           when: temp_j2_files is defined and temp_j2_files.files | length > 0
           changed_when: false
 

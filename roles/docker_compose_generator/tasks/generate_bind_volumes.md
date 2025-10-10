@@ -1,6 +1,8 @@
 # Playbook logic
 
 ## Always:
+
+### Create bind volumes defined in "long" format
 Create the bind volumes as defined in the docker-compose file if they use the key "source" in the volumes section.
 Example:
 
@@ -10,6 +12,10 @@ volumes:
     source: path/media
     target: /home/docker_app/media
 ```
+
+#### Bind volume owner and group
+**Important**: The long-form volumes will have their owners changed to *bind_vol_owner* if variable is defined in `xyz-vars.yaml`.
+It will inherit a the first group from *linux_extra_groups* if *bind_vol_group_is_extra* is true
 
 ## Optional:
 It checks if a directory structure exists for the docker_app, and if so, it copies

@@ -3,7 +3,7 @@ services:
     container_name: GlueTun-Nord
     image: qmcgaw/gluetun:latest
     networks:
-      - nordvpn    
+      - nordvpn
     cap_add:
       - NET_ADMIN
     sysctls:
@@ -89,10 +89,9 @@ services:
     restart: unless-stopped
     depends_on:
       - vpn
-      
-networks: 
+
+networks:
   nordvpn:
     name: nordvpn
     driver: bridge
     external: true
-    
