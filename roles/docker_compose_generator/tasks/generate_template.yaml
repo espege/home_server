@@ -44,6 +44,7 @@
         sanitized_destination_compose_directory: "{{ remote_directory }}/{{ docker_app }}"
         docker_app_install_state: "{{ current_loop_facts['state'] | default('present') }}"
         output_local: "{{ current_loop_facts['local_compose_output'] | default(false) }}"
+        volume_structure_copied: false
 
     - name: Ansible | Set Fact | Docker Compose Content | {{ docker_app }}
       ansible.builtin.set_fact:

@@ -17,7 +17,10 @@
   when: (current_loop_facts.bind_vol_group_is_extra | default(false)) is truthy
 
 - name: Ansible | Copy remote directory if directory exists with name {{ docker_app }}
-  when: directory_to_copy is defined and directory_to_copy.stat.exists
+  when:
+    - directory_to_copy is defined
+    - directory_to_copy.stat.exists
+    - not volume_structure_copied is truthy
   block:
     - name: Ansible | Localhost operations
       become: false
@@ -36,7 +39,6 @@
             src: "{{ directory_to_copy.stat.path }}"
             dest: "{{ temp_j2_dir.path }}/"
             mode: "{{ dir_permissions | default('770') }}"
-          changed_when: false
 
         - name: Ansible | Find | .j2 files in temp directory
           ansible.builtin.find:
@@ -46,10 +48,10 @@
             recurse: true
           register: temp_j2_files
 
-        - name: Ansible | Convert .j2 files in temp dir
+        - name: Ansible | Convert .j2 files in temp dir. Total = {{ temp_j2_files.files | length }}
           ansible.builtin.template:
             src: "{{ item.path }}"
-            dest: "{{ item.path | regex_replace('\\.j2$', '') | basename }}"
+            dest: "{{ item.path | regex_replace('\\.j2$', '') }}"
             mode: "0770"
           loop: "{{ temp_j2_files.files }}"
           loop_control:
@@ -67,13 +69,17 @@
           when: temp_j2_files is defined and temp_j2_files.files | length > 0
           changed_when: false
 
-    - name: Copy processed directory to final destination
+    - name: Copy processed directory to final destination {{ remote_directory }}
       ansible.builtin.copy:
         src: "{{ temp_j2_dir.path }}/"
         dest: "{{ remote_directory }}"
         mode: "{{ dir_permissions | default(docker_compose_generator_default_dir_permissions) }}"
         owner: "{{ bind_volume_owner }}"
         group: "{{ bind_volume_group }}"
+
+    - name: Ansible | Set Fact | volume_structure_copied completed
+      ansible.builtin.set_fact:
+        volume_structure_copied: true
 
   rescue:
     - name: Remove temp directory
@@ -86,7 +92,6 @@
       changed_when: false
 
   always:
-    # Cleanup temp directory
     - name: Remove temp directory
       become: false
       delegate_to: localhost
