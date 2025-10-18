@@ -14,23 +14,27 @@
     - name: Add networks to traefik configuration
       when: traefik_compose_stat.stat.exists
       block:
-      - name: Traefik networks | Add network to proxy service networks list
-        ansible.builtin.lineinfile:
-          path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
-          insertafter: "^    networks:?"
-          regexp: "^      - {{ external_network.value.name }}?"
-          line: "      - {{ external_network.value.name }}"
-          state: "{{ current_loop_facts['state'] | default('present') }}"
+        - name: Set network name fact
+          ansible.builtin.set_fact:
+            external_network_name: "{{ external_network.value.name | default(external_network.key) }}"
 
-      - name: Traefik networks | Add network to networks section
-        ansible.builtin.blockinfile:
-          path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
-          insertafter: 'networks:'
-          marker: "# {mark} NETWORK {{ external_network.value.name | upper }}"
-          state: "{{ current_loop_facts['state'] | default('present') }}"
-          block: |
-            {% filter indent(width=2, first=true) %}
-            {{ external_network.value.name }}:
-              driver: bridge
-              external: true
-            {% endfilter %}
+        - name: Traefik networks | Add network to proxy service networks list | {{ external_network_name }}
+          ansible.builtin.lineinfile:
+            path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
+            insertafter: "^    networks:?"
+            regexp: "^      - {{ external_network_name }}?"
+            line: "      - {{ external_network_name }}"
+            state: "{{ current_loop_facts['state'] | default('present') }}"
+
+        - name: Traefik networks | Add network to networks section
+          ansible.builtin.blockinfile:
+            path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
+            insertafter: 'networks:'
+            marker: "# {mark} NETWORK {{ external_network_name | upper }}"
+            state: "{{ current_loop_facts['state'] | default('present') }}"
+            block: |
+              {% filter indent(width=2, first=true) %}
+              {{ external_network_name }}:
+                driver: bridge
+                external: true
+              {% endfilter %}

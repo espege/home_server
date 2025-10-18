@@ -1,0 +1,78 @@
+services:
+  proxy:
+    image: library/traefik:latest         # Review traefik documentation https://doc.traefik.io/traefik/
+    container_name: traefik
+    networks:
+      - nordvpn
+      - plex
+      - actual_network
+      - portainer_network
+      - semaphore
+    command:
+      - --api.insecure={{ traefik.API_INSECURE | default('false') }}
+      - --api={{ traefik.API_INSECURE | default('true') }}
+      - --providers.docker=true
+      - --api.dashboard=true
+      - --providers.docker.exposedbydefault=false
+      # - --providers.file.directory=/etc/traefik/dynamic
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.certresolver=le
+      - --entrypoints.websecure.http.tls.domains[0].main=*.{{ public_domain_name }}
+      - --entrypoints.websecure.http.tls.domains[0].sans={{ public_domain_name }}
+      - --certificatesresolvers.le.acme.dnschallenge=true
+      - --certificatesresolvers.le.acme.dnschallenge.delaybeforecheck=10
+      - --certificatesresolvers.le.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.le.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesresolvers.le.acme.email={{ traefik.ACME_EMAIL }}
+      - --certificatesresolvers.le.acme.storage=letsencrypt/acme.json
+      #- --tls.stores.default.defaultGeneratedCert.resolver=le
+      #- --tls.stores.default.defaultGeneratedCert.domain[0].main=*.{{ public_domain_name }}
+      #- --tls.stores.default.defaultGeneratedCert.domain[0].sans={{ public_domain_name }}
+      - --log=true
+      - --log.level=DEBUG # ERROR
+      - --log.format=json
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1  # Recomended if using ipv4 only
+    labels:
+      - "traefik.http.routers.api.rule=Host(`traefik.{{ public_domain_name }}`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=auth"
+    ports:
+      - 80:80/tcp
+      - 443:443/tcp
+      - 8080:8080/tcp
+    environment:
+      TZ: {{ docker_compose_generator_default_time_zone }}
+      CF_DNS_API_TOKEN: {{ traefik.CF_API_TOKEN }}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/letsencrypt:/letsencrypt
+networks:
+# BEGIN NETWORK NORDVPN
+  nordvpn:
+    driver: bridge
+    external: true
+# END NETWORK NORDVPN
+# BEGIN NETWORK SEMAPHORE
+  semaphore:
+    driver: bridge
+    external: true
+# END NETWORK SEMAPHORE
+# BEGIN NETWORK PLEX
+  plex:
+    driver: bridge
+    external: true
+# END NETWORK PLEX
+# BEGIN NETWORK ACTUAL_NETWORK
+  actual_network:
+    driver: bridge
+    external: true
+# END NETWORK ACTUAL_NETWORK
+# BEGIN NETWORK PORTAINER_NETWORK
+  portainer_network:
+    driver: bridge
+    external: true
+# END NETWORK PORTAINER_NETWORK

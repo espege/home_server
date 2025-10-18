@@ -84,7 +84,7 @@
         loop_var: 'external_network'
       when:
         - current_loop_facts['connect_to_traefik'] is defined
-        - current_loop_facts['connect_to_traefik'] | default(false) is true
+        - current_loop_facts['connect_to_traefik'] | default(false) is truthy
         - docker_apps_folders is defined
         - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
 
