@@ -44,10 +44,12 @@
 - name: Linux | Create User Accounts for {{ docker_app }}
   ansible.builtin.user:
     name: "{{ current_loop_facts.linux_users is defined and linux_user.name or '' }}"
-    comment: "{{ linux_user.comment | default('Created by ansible role docker_compose_generator') }}"
+    comment: "{{ linux_user.comment | default('Created by ansible role docker_compose_generator for $DOCKER_APP') }}"
     groups: "{{ (extra_groups_gid_map.keys() | join(',')) | default(omit) }}"
     shell: "{{ linux_user.shell | default('/sbin/nologin') }}"
     state: "{{ current_loop_facts.state | default('present') }}"
+  environment:
+    DOCKER_APP: "{{ docker_app }}"
   register: docker_app_users
   loop: "{{ current_loop_facts.linux_users | default([]) }}"
   loop_control:

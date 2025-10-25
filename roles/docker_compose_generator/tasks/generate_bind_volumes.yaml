@@ -6,15 +6,24 @@
   become: false
   register: directory_to_copy
 
-- name: Facts | Set user and group for bind volumes
+- name: Facts | Set default user and group for bind volumes
   ansible.builtin.set_fact:
     bind_volume_owner: "{{ current_loop_facts.bind_vol_owner | default('root') }}"
     bind_volume_group: "{{ current_loop_facts.bind_vol_owner | default('root') }}"
 
-- name: Facts | Override bind volume group with FIRST extra group if bind_vol_group_is_extra is true
+- name: Validation | Fail if bind_vol_group not in extra_groups_gid_map map
+  ansible.builtin.fail:
+    msg: "bind_vol_group is defined as {{ bind_volume_group }}, but this group is not found in extra_groups_gid_map. Please define the group in linux_extra_groups."
+  when:
+    - (current_loop_facts.bind_vol_group | default(false)) is defined
+    - (current_loop_facts.bind_vol_group | default(false)) is not false
+    - extra_groups_gid_map.values() | length == 0
+    - current_loop_facts.bind_vol_group not in extra_groups_gid_map.keys()
+
+- name: Facts | Override bind volume group if bind_vol_group is defined
   ansible.builtin.set_fact:
-    bind_volume_group: "{{ extra_groups_gid_map.values() | first }}"
-  when: (current_loop_facts.bind_vol_group_is_extra | default(false)) is truthy
+    bind_volume_group: "{{ current_loop_facts.bind_vol_group }}"
+  when: (current_loop_facts.bind_vol_group | default(false)) is truthy
 
 - name: Ansible | Copy remote directory if directory exists with name {{ docker_app }}
   when:
@@ -115,9 +124,8 @@
         owner: "{{ bind_volume_owner }}"
         group: "{{ bind_volume_group }}"
         mode: "{{ dir_permissions | default(docker_compose_generator_default_dir_permissions) }}"
-        recurse: false # Takes too long for large directories
+        recurse: true # Takes too long for large directories
       when:
         - split_volume is defined and split_volume[1] == '' # Path ends without file extension
       tags:
         - directories
-      check_mode: true
