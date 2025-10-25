@@ -8,6 +8,11 @@
       ansible.builtin.apt:
         name: ufw
         state: present
+      when: ufw_installed is not defined or not ufw_installed
+
+    - name: Set UFW Fact
+      ansible.builtin.set_fact:
+        ufw_installed: true
 
     - name: Implement firewall rules
       community.general.ufw:

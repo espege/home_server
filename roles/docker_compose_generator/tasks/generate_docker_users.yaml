@@ -1,4 +1,4 @@
-- name: Linux | Add Extra groups
+- name: Linux | Fetch GID for bind volume group | {{ docker_app }}
   when:
     - current_loop_facts.linux_extra_groups is defined
     - current_loop_facts.linux_extra_groups | length > 0
