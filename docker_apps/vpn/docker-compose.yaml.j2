@@ -7,7 +7,7 @@ services:
     cap_add:
       - NET_ADMIN
     sysctls:
-      - net.ipv6.conf.all.disable_ipv6=1  # Recomended if using ipv4 only
+      - net.ipv6.conf.all.disable_ipv6=1  # Recommended if using ipv4 only
     environment:
       VPN_SERVICE_PROVIDER: nordvpn
       OPENVPN_USER: {{ vpn_config.VPN_SVC_USER | default('your_username') }}
@@ -18,6 +18,7 @@ services:
     ports:
       - {{ vpn_config.GLUETUN_PORT | default(8080) }}:8080
       - {{ vpn_config.JACKETT_PORT | default(9117) }}:9117
+      - {{ vpn_config.FLARESOLVERR_PORT | default(8191) }}:8191
     restart: always
 
   qbittorrent-nox:
@@ -89,6 +90,14 @@ services:
     restart: unless-stopped
     depends_on:
       - vpn
+
+  flaresolverr:
+    network_mode: container:GlueTun-Nord
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      TZ: {{ docker_compose_generator_default_time_zone }}
+    restart: unless-stopped
 
 networks:
   nordvpn:
