@@ -7,7 +7,7 @@ linux_users:
     comment: 'automation ripping machine User'
     shell: /usr/sbin/nologin
 bind_vol_owner: arm
-bind_vol_group_is_extra: true
+bind_vol_group: "Media"
 linux_extra_groups:
   - Media
   - cdrom

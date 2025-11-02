@@ -4,6 +4,8 @@ local_compose_output: true
 connect_to_traefik: true
 linux_users:
   "{{ samba_config.users | default([{\"name\":\"bob\",\"password\":\"placeholder\"}]) }}"
+linux_extra_groups:
+  - onedrive
 ufw:
   - rule: allow
     proto: tcp

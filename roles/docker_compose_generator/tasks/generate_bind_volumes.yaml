@@ -91,17 +91,7 @@
         volume_structure_copied: true
 
   rescue:
-    - name: Remove temp directory
-      become: false
-      delegate_to: localhost
-      ansible.builtin.file:
-        path: "{{ temp_j2_dir.path }}"
-        state: absent
-      when: temp_j2_dir is defined and temp_j2_dir.path is defined
-      changed_when: false
-
-  always:
-    - name: Remove temp directory
+    - name: Remove temp directory | Rescue Block
       become: false
       delegate_to: localhost
       ansible.builtin.file:
@@ -129,3 +119,11 @@
         - split_volume is defined and split_volume[1] == '' # Path ends without file extension
       tags:
         - directories
+  always:
+    - name: Cleanup | Remove temp directory | Always Block
+      become: false
+      delegate_to: localhost
+      ansible.builtin.file:
+        path: "{{ temp_j2_dir.path }}"
+        state: absent
+      changed_when: false

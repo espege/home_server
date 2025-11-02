@@ -5,6 +5,7 @@ services:
     restart: always
     networks:
       - mariadb
+    container_name: mariadb
     ports:
       - {{ digikam.maria_public_port | default('3306') }}:3306
     labels:

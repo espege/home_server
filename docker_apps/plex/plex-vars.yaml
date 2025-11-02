@@ -7,7 +7,7 @@ linux_users:
     comment: 'Plex Media Server service account | Created by ansible'
     shell: /usr/sbin/nologin
 bind_vol_owner: plex
-bind_vol_group_is_extra: true
+bind_vol_group: "Media"
 linux_extra_groups:
   - Media
 ufw:

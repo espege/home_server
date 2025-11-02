@@ -16,4 +16,4 @@ linux_users:
 linux_extra_groups:
   - Media
 bind_vol_owner: nordvpn
-bind_vol_group_is_extra: true
+bind_vol_group: "Media"

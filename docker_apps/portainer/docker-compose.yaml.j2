@@ -37,7 +37,7 @@ services:
     ports:
       - "9001:9001"
     volumes:
-      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/agent_data:/datata
+      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}/agent_data:/data
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
       - /:/host

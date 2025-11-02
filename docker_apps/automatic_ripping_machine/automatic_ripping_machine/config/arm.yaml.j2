@@ -301,7 +301,7 @@ EMBY_API_KEY: ""
 #############################
 
 # Notify after Rip?
-NOTIFY_RIP: "{{ arm_config.notify_rip | default('true') }}"
+NOTIFY_RIP: {{ arm_config.notify_rip | default('true') }}
 
 # Notify after transcode?
 NOTIFY_TRANSCODE: true
