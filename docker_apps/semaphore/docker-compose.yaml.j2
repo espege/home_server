@@ -41,7 +41,7 @@ services:
       - traefik.enable=true
       - traefik.http.routers.actual.rule=Host(`semaphore.{{ public_domain_name }}`)|Host(`semaphore.{{ local_domain_name }}`)
       - traefik.http.routers.actual.entrypoints=websecure
-      - traefik.http.middlewares.router.headers.customrequestheaders.Host=semaphore.{{ public_domain_name }}
+      - traefik.http.middlewares.semaphore.headers.customrequestheaders.Host=semaphore.{{ public_domain_name }}
       - traefik.http.services.actual.loadbalancer.server.port=3000
     depends_on:
       - postgres
