@@ -39,10 +39,10 @@ services:
       - host.docker.internal:{{ ansible_host }}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.actual.rule=Host(`semaphore.{{ public_domain_name }}`)|Host(`semaphore.{{ local_domain_name }}`)
-      - traefik.http.routers.actual.entrypoints=websecure
+      - traefik.http.routers.semaphore.rule=Host(`semaphore.{{ public_domain_name }}`)|Host(`semaphore.{{ local_domain_name }}`)
+      - traefik.http.routers.semaphore.entrypoints=websecure
       - traefik.http.middlewares.semaphore.headers.customrequestheaders.Host=semaphore.{{ public_domain_name }}
-      - traefik.http.services.actual.loadbalancer.server.port=3000
+      - traefik.http.services.semaphore.loadbalancer.server.port=3000
     depends_on:
       - postgres
 volumes:
