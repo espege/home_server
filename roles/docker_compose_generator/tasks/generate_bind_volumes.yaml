@@ -127,3 +127,4 @@
         path: "{{ temp_j2_dir.path }}"
         state: absent
       changed_when: false
+      when: temp_j2_dir is defined and temp_j2_dir.path is defined
