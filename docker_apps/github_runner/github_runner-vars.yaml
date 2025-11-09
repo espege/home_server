@@ -1,0 +1,3 @@
+---
+state: present
+local_compose_output: true

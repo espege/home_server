@@ -8,6 +8,6 @@ ufw:
   - rule: allow
     proto: tcp
     port: 22
-    from_ip: '172.30.0.0/16'
+    from_ip: "{{ semaphore.subnet | default('172.16.222.0/16') }}"
     to_ip: "{{ ansible_host }}"
     comment: Allow semaphore to SSH

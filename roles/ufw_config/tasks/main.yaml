@@ -2,6 +2,7 @@
 - name: Configure UFW firewall
   tags:
     - firewall
+    - ufw
   block:
 
     - name: Install UFW package

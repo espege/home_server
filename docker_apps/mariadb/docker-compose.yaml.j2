@@ -10,16 +10,16 @@ services:
       - {{ digikam.maria_public_port | default('3306') }}:3306
     labels:
       - traefik.enable=true
-      - traefik.http.routers.mariadb.rule=Host(`mariadb.{{ public_domain_name }}`) || Host(`mariadb.{{ local_domain_name }}`)
+      - traefik.http.routers.mariadb.rule=Host(`mariadb.${public_domain_name}`) || Host(`mariadb.${local_domain_name}`)
       - traefik.http.routers.mariadb.entrypoints=web
       - traefik.http.services.mariadb.loadbalancer.server.port=3306
     volumes:
-      - {{ docker_compose_generator_default_bind_path }}/{{ docker_app }}:/var/lib/mysql
+      - ${docker_volume_path}/{{ docker_app }}:/var/lib/mysql
     environment:
-      MARIADB_USER: {{ digikam.mariadb_user | default('maria') }}
-      MARIADB_PASSWORD: {{ digikam.mariadb_password | default('changeme123') }}
-      MARIADB_ROOT_PASSWORD: {{ digikam.mariadb_root_password | default('changeme123r00t') }}
-      MARIADB_AUTO_UPGRADE: {{ digikam.mariadb_auto_upgrade | default('true')}}
+      MARIADB_USER: ${mariadb_user}
+      MARIADB_PASSWORD: ${mariadb_password}
+      MARIADB_ROOT_PASSWORD: ${mariadb_root_password}
+      MARIADB_AUTO_UPGRADE: ${mariadb_auto_upgrade}
 
   adminer:
     image: library/adminer:latest
@@ -30,7 +30,7 @@ services:
       - {{ digikam.adminer_public_port | default('8080') }}:8080
     labels:
     - traefik.enable=true
-    - traefik.http.routers.mariaadmin.rule=Host(`mariaadmin.{{ public_domain_name }}`) || Host(`mariaadmin.{{ local_domain_name }}`)
+    - traefik.http.routers.mariaadmin.rule=Host(`mariaadmin.${public_domain_name}`) || Host(`mariaadmin.${local_domain_name}`)
     - traefik.http.routers.mariaadmin.entrypoints=web
     - traefik.http.services.mariaadmin.loadbalancer.server.port=8080
 

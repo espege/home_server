@@ -1,0 +1,10 @@
+services:
+  github-runner:
+    image: espege/github-runner:latest
+    container_name: github-runner
+    restart: unless-stopped
+    environment:
+      GH_OWNER: ${gh_owner}
+      GH_REPOSITORY: ${gh_repository}
+      GH_TOKEN: ${gh_token}
+      TZ: ${TZ}

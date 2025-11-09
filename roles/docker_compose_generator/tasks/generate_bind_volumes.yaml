@@ -118,7 +118,7 @@
       when:
         - split_volume is defined and split_volume[1] == '' # Path ends without file extension
       tags:
-        - directories
+        - docker_dir_permissions
   always:
     - name: Cleanup | Remove temp directory | Always Block
       become: false

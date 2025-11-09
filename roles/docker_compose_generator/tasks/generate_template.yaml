@@ -88,7 +88,12 @@
         - docker_apps_folders is defined
         - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
 
-    - name: Generate templated files | {{ docker_app }}
+    - name: Set fact for env files
+      ansible.builtin.set_fact:
+        env_files: "{{ j2_files.files | selectattr('path', 'search', '.env.j2$') | list }}"
+        compose_files: "{{ j2_files.files | rejectattr('path', 'search', '.env.j2$') | list }}"
+
+    - name: Generate templated compose files | {{ docker_app }}
       ansible.builtin.template:
         src: "{{ my_template.path }}"
         dest: "{{ sanitized_destination_compose_directory }}/{{ my_template.path | basename | string | replace('.j2', '') }}"
@@ -97,35 +102,51 @@
       become: "{{ output_local | ternary(false, true) }}"
       tags:
         - docker_compose
-      loop: "{{ j2_files.files }}"
+      loop: "{{ compose_files }}"
       loop_control:
         label: "{{ my_template.path | basename }}"
         loop_var: my_template
       register: generated_template
 
-    - name: Docker-Compose | Replace images tags with SHA | {{ docker_app }}
-      ansible.builtin.include_tasks:
-        file: 'get_latest_image_hash.yaml'
-      loop: "{{ docker_compose_contents.services | dict2items | selectattr('value.image', 'defined') | map(attribute='value.image') | flatten }}"
-      loop_control:
-        label: "{{ docker_image }}"
-        loop_var: 'docker_image'
-      when: docker_compose_contents.services is defined and docker_compose_contents.services | length > 0
+    - name: .Env File Management | {{ docker_app }}
+      tags: env_files
+      when: env_files | length > 0
+      become: "{{ output_local | ternary(false, true) }}"
+      delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
+      block:
+        - name: Generate base env files | {{ docker_app }}
+          ansible.builtin.template:
+            src: "{{ env_file.path }}"
+            dest: "{{ sanitized_destination_compose_directory }}/{{ env_file.path | basename | string | replace('.j2', '') }}"
+            mode: '0600'
+          loop: "{{ env_files }}"
+          loop_control:
+            label: "{{ env_file.path | basename }}"
+            loop_var: env_file
+          register: generated_env_files
 
-    - name: Docker | Compose up | Portainer only
+        - name: Add common env variables | {{ docker_app }}
+          ansible.builtin.blockinfile:
+            insertafter: EOF
+            path: "{{ item.dest }}"
+            mode: '0600'
+            block: "{{ docker_compose_generator_mandatory_env_file_vars }}"
+          loop: "{{ generated_env_files.results }}"
+          loop_control:
+            label: "{{ item.dest | basename }}"
+            loop_var: item
+
+    - name: Docker | Compose up | Portainer
       community.docker.docker_compose_v2:
         project_src: "{{ portainer_template.dest | dirname }}"
         state: "{{ docker_app_install_state }}"
+        env_files: "{{ portainer_template.dest | dirname }}/stack.env"
       loop: "{{ generated_template.results }}"
       loop_control:
         label: "{{ portainer_template.dest | basename }}"
         loop_var: portainer_template
-      tags:
-        - compose
-        - docker
       when:
         - docker_app == 'portainer'
-        - "'docker-compose' in portainer_template.dest"
         - current_loop_facts['docker_compose_run'] is defined
         - current_loop_facts['docker_compose_run']
 
