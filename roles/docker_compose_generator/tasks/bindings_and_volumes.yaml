@@ -1,0 +1,41 @@
+- name: Facts | Set default user and group for bind volumes
+  ansible.builtin.set_fact:
+    bind_volume_owner: "{{ current_loop_facts.bind_vol_owner | default('root') }}"
+    bind_volume_group: "{{ current_loop_facts.bind_vol_owner | default('root') }}"
+
+- name: Validation | Fail if bind_vol_group not in extra_groups_gid_map map
+  ansible.builtin.fail:
+    msg: "bind_vol_group is defined as {{ bind_volume_group }}, but this group is not found in extra_groups_gid_map. Please define the group in linux_extra_groups."
+  when:
+    - (current_loop_facts.bind_vol_group | default(false)) is defined
+    - (current_loop_facts.bind_vol_group | default(false)) is not false
+    - extra_groups_gid_map.values() | length == 0
+    - current_loop_facts.bind_vol_group not in extra_groups_gid_map.keys()
+
+- name: Facts | Override bind volume group if bind_vol_group is defined
+  ansible.builtin.set_fact:
+    bind_volume_group: "{{ current_loop_facts.bind_vol_group }}"
+  when: (current_loop_facts.bind_vol_group | default(false)) is truthy
+
+- name: Ansible | Stat for directory structure in {{ docker_app }} # If found, then copy as remote_directory
+  ansible.builtin.stat:
+    path: "{{ docker_apps_path }}/{{ docker_app }}/{{ docker_app }}"
+  delegate_to: localhost
+  become: false
+  register: directory_to_copy
+
+# Move files from docker app directory if matching directory found
+- name: Copy file structure if directory found in docker_app matching name {{ docker_app }}
+  ansible.builtin.include_tasks:
+    file: 'copy_file_structure.yaml'
+  when:
+    - directory_to_copy is defined and directory_to_copy.stat.exists and directory_to_copy.stat.isdir
+
+# Create all bind mounts with source key in them and move contents if applicable
+- name: Docker Volumes | Create bind mounts | {{ docker_app }}
+  ansible.builtin.include_tasks:
+    file: 'generate_bind_volumes.yaml'
+  loop: "{{ docker_compose_contents.services | dict2items | selectattr('value.volumes', 'defined') | map(attribute='value.volumes') | flatten | selectattr('source', 'defined') | map(attribute='source') }}"
+  loop_control:
+    label: "{{ docker_volume }}"
+    loop_var: 'docker_volume'

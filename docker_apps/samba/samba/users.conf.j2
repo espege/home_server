@@ -1,0 +1,4 @@
+#username:UID:groupname:GID:password:homedir
+{% for user in docker_app_users.results %}
+{{ user.name | lower }}:{{ user.uid | default(1000 + loop.index0) }}:{{ user.name }}:{{ user.group | default(1000 + loop.index0) }}:{{ user.linux_user.smb_password | default('') }}:/home/{{ user.name | lower }}
+{% endfor %}

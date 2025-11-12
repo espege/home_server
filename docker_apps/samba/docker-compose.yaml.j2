@@ -1,82 +1,16 @@
-
 services:
   samba:
-    image: ghcr.io/servercontainers/samba:smbd-avahi-latest
+    image: dockurr/samba
     container_name: samba
     network_mode: host
-    ports:
-      - "445:445"
-    restart: unless-stopped
     environment:
-      FAIL_FAST: 1
-      MODEL: 'MacSamba'
-      SAMBA_CONF_LOG_LEVEL: 3
-
-      # Global
-      SAMBA_GLOBAL_CONFIG_min_SPACE_protocol: SMB3
-      # Useeful for MacOS
-      SAMBA_GLOBAL_CONFIG_fruit_COLON_metadata: stream
-      # SAMBA_GLOBAL_CONFIG_server_SPACE_multi_SPACE_channel_SPACE_support: yes
-      # SAMBA_GLOBAL_CONFIG_aio_SPACE_write_SPACE_size: 16384
-      # SAMBA_GLOBAL_CONFIG_aio_SPACE_read_SPACE_size: 16384
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_zero_file_id: yes
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_encoding: native
-      # Unclear benefit
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_veto_appledouble: no
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_nfs_aces: no
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_wipe_intentionally_left_blank_rfork: yes
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_delete_empty_adfiles: yes
-      # SAMBA_GLOBAL_CONFIG_fruit_COLON_posix_rename: yes
-      # User MGMT
-{# Create groups from samba_config[users] #}
-{% for user in samba_config.users %}
-{% if user.group is defined and user.group %}
-{# Add "parsed" group to user #}
-{% filter indent(width=6, first=true) %}
-{% set group_obj = docker_app_users.results | selectattr('name', 'equalto', user.group) | list | first %}
-{# Add GROUP_ #}
-{% if group_obj is defined and group_obj %}
-GROUP_{{ user.group }}: {{ group_obj.group }}
-{% endif %}
-GROUPS_{{ user.name | lower}}: {{ user.group }}
-{% endfilter %}
-{% endif %}
-{% if user.static_group is defined %}
-{% filter indent(width=6, first=true) %}
-{# Add "static" group to user #}
-GROUP_{{ user.static_group.name }}: {{ user.static_group.id }}
-GROUPS_{{ user.name | lower}}: {{ user.static_group.name }}
-{% endfilter %}
-{% endif %}
-{% endfor %}
-
-{# Create users from samba_config[users] {name, smb_password, samba_pwd_hash, groups} #}
-{% for user in samba_config.users %}
-{% filter indent(width=6, first=true) %}
-ACCOUNT_{{ user.name | lower }}: {{ user.smb_password | default('12345' )}}
-UID_{{ user.name | lower }}: {{ docker_app_users.results[loop.index0].uid }}
-{% endfilter %}
-{% endfor %}
-{# Create SMB shares #}
-{% for share in samba_config.shares %}
-{% filter indent(width=6, first=true) %}
-{{ share.key }}: |
-{% filter indent(width=2, first=true) %}
-[{{ share.name }}]
-path = {{ share.path }}
-browsable = yes
-writable = {{ share.writeable | default('yes') }}
-read only = {{ share.readonly | default('no') }}
-guest ok = no
-valid users = {{ share.valid_users }}
-force group = {{ share.force_group }}
-create mask = 0770
-directory mask = 2770
-veto files = {{ share.veto_files | default('') }}
-delete veto files = {{ share.delete_veto_files | default('no') }}
-{% endfilter %}
-{% endfilter %}
-{% endfor %}
+      UID: ${uid}
+      GID: ${gid}
+    ports:
+      - 445:445
     volumes:
-      - /{{ zfs_pool_name }}/{{ onedrive_config.directory_name }}/Pictures/:/shares/onedrive_photos:rw
+      - ${docker_volume_path}/{{ docker_app }}/smb.conf:/etc/samba/smb.conf
+      - ${docker_volume_path}/{{ docker_app }}/users.conf:/etc/samba/users.conf
+      - /${zfs_pool_name}/{{ onedrive_config.directory_name }}/Pictures/:/shares/onedrive_photos:rw
       - /{{ lvms['staging'].mount_point }}/automatic_ripping_machine/media/:/shares/arm:rw
+    restart: always

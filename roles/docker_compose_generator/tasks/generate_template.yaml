@@ -65,14 +65,10 @@
       delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
       become: "{{ output_local | default(omit) | ternary(false, omit) }}"
 
-    # Create all bind mounts with source key in them
+    # Create bind volumes and move contents for docker volumes
     - name: Docker Volumes | Create bind mounts | {{ docker_app }}
       ansible.builtin.include_tasks:
-        file: 'generate_bind_volumes.yaml'
-      loop: "{{ docker_compose_contents.services | dict2items | selectattr('value.volumes', 'defined') | map(attribute='value.volumes') | flatten | selectattr('source', 'defined') | map(attribute='source') }}"
-      loop_control:
-        label: "{{ docker_volume }}"
-        loop_var: 'docker_volume'
+        file: 'bindings_and_volumes.yaml'
 
     # If traefik is among docker apps and connect_to_traefik, add current app external networks
     - name: Docker Networks | Add external networks to Traefik | {{ docker_app }}

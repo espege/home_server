@@ -1,0 +1,44 @@
+[global]
+    server role = standalone server
+    dns proxy = no
+    server string = samba
+    idmap config * : range = 3000-7999
+    security = user
+    server min protocol = SMB3
+
+    # disable printing services
+    load printers = no
+    printing = bsd
+    printcap name = /dev/null
+    disable spoolss = yes
+
+    # Mac OS
+    vfs objects = catia fruit streams_xattr
+    fruit:resource = file
+    fruit:metadata = stream
+    fruit:locking = netatalk
+    fruit:encoding = native
+
+[Photos]
+    path = /shares/onedrive_photos
+    browsable = yes
+    writable = yes
+    read only = no
+    guest ok = no
+    valid users = onedrive
+    create mask = 0770
+    directory mask = 2770
+    veto files = /._*/.DS_Store/
+    delete veto files = yes
+
+[AutomaticRippingMachine]
+    path = /shares/arm
+    browsable = yes
+    writable = no
+    read only = no
+    guest ok = no
+    valid users = arm
+    create mask = 0770
+    directory mask = 2770
+    veto files = /._*/.DS_Store/
+    delete veto files = no

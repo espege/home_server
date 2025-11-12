@@ -3,9 +3,8 @@ state: present
 local_compose_output: true
 connect_to_traefik: true
 linux_users:
-  "{{ samba_config.users | default([{\"name\":\"bob\",\"password\":\"placeholder\"}]) }}"
-linux_extra_groups:
-  - onedrive
+  "{{ samba_config.users | default(current_loop_facts['default_users']) }}"
+bind_vol_owner: 'samba'
 ufw:
   - rule: allow
     proto: tcp
@@ -13,3 +12,6 @@ ufw:
     from_ip: "{{ local_subnet_range }}"
     to_ip: "{{ ansible_host }}"
     comment: Allow SMB from local domain
+default_users:
+  - name: samba
+    password:
