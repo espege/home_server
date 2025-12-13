@@ -1,10 +1,10 @@
 ---
 state: present
 connect_to_traefik: true
-local_compose_output: true # Output to local machine
+local_compose_output: true  # Output to local machine
 linux_users:
   - name: arm
-    comment: 'automation ripping machine User'
+    comment: 'Automation Ripping Machine User'
     shell: /usr/sbin/nologin
 bind_vol_owner: arm
 bind_vol_group: "Media"
