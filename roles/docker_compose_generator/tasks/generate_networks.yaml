@@ -1,4 +1,8 @@
 ---
+- name: Set network name fact
+  ansible.builtin.set_fact:
+    network_item_name: "{{ network_item.value.name | default(network_item.key) }}"
+
 - name: Traefik networks | Create external networks
   delegate_to: localhost
   become: false
@@ -14,27 +18,24 @@
     - name: Add networks to traefik configuration
       when: traefik_compose_stat.stat.exists
       block:
-        - name: Set network name fact
-          ansible.builtin.set_fact:
-            external_network_name: "{{ external_network.value.name | default(external_network.key) }}"
 
-        - name: Traefik networks | Add network to proxy service networks list | {{ external_network_name }}
+        - name: Traefik networks | Add network to proxy service networks list | {{ network_item_name }}
           ansible.builtin.lineinfile:
             path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
             insertafter: "^    networks:?"
-            regexp: "^      - {{ external_network_name }}?"
-            line: "      - {{ external_network_name }}"
+            regexp: "^      - {{ network_item_name }}?"
+            line: "      - {{ network_item_name }}"
             state: "{{ current_loop_facts['state'] | default('present') }}"
 
         - name: Traefik networks | Add network to networks section
           ansible.builtin.blockinfile:
             path: "{{ docker_apps_path }}/traefik/docker-compose.yaml.j2"
             insertafter: 'networks:'
-            marker: "# {mark} NETWORK {{ external_network_name | upper }}"
+            marker: "# {mark} NETWORK {{ network_item_name | upper }}"
             state: "{{ current_loop_facts['state'] | default('present') }}"
             block: |
               {% filter indent(width=2, first=true) %}
-              {{ external_network_name }}:
+              {{ network_item_name }}:
                 driver: bridge
                 external: true
               {% endfilter %}

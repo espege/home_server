@@ -70,14 +70,14 @@
       ansible.builtin.include_tasks:
         file: 'bindings_and_volumes.yaml'
 
-    # If traefik is among docker apps and connect_to_traefik, add current app external networks
-    - name: Docker Networks | Add external networks to Traefik | {{ docker_app }}
+    # If traefik is among docker apps and connect_to_traefik, add current app networks to Traefik
+    - name: Docker Networks | Add networks to Traefik | {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'generate_networks.yaml'
-      loop: "{{ docker_compose_contents.networks | default({}) | dict2items | selectattr('value.external', 'defined') | selectattr('value.external', 'equalto', true) }}"
+      loop: "{{ docker_compose_contents.networks | default({}) | dict2items }}"
       loop_control:
-        label: "{{ external_network.value.name | default(external_network.key) }}"
-        loop_var: 'external_network'
+        label: "{{ network_item.value.name | default(network_item.key) }}"
+        loop_var: 'network_item'
       when:
         - current_loop_facts['connect_to_traefik'] is defined
         - current_loop_facts['connect_to_traefik'] | default(false) is truthy
