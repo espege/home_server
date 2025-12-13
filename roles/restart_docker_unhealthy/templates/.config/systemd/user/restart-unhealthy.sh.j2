@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOG_DESTINATION="/var/log/docker_restart.log"
+LOG_DESTINATION="/home/{{ restart_docker_unhealthy_cron_user }}/docker_restart.log"
 
 function append_to_log() {
     MESSAGE=$1

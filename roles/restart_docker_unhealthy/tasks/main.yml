@@ -26,28 +26,23 @@
         owner: "{{ restart_docker_unhealthy_cron_user }}"
         group: "{{ restart_docker_unhealthy_cron_user }}"
 
-    - name: Create docker restart service
+    - name: Copy templated files
       ansible.builtin.template:
-        src: .config/systemd/user/restart-unhealthy.service.j2
-        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.service"
+        src: .config/systemd/user/{{ item }}
+        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/{{ item | replace('.j2', '') }}"
         owner: "{{ restart_docker_unhealthy_cron_user }}"
         group: "{{ restart_docker_unhealthy_cron_user }}"
         mode: "0640"
+      loop:
+        - restart-unhealthy.service.j2
+        - restart-unhealthy.timer.j2
+        - restart-unhealthy.sh.j2
+      loop_control:
+        label: "{{ item | replace('.j2', '') }}"
 
-    - name: Create docker restart timer
-      ansible.builtin.template:
-        src: .config/systemd/user/restart-unhealthy.timer.j2
-        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.timer"
-        owner: "{{ restart_docker_unhealthy_cron_user }}"
-        group: "{{ restart_docker_unhealthy_cron_user }}"
-        mode: "0640"
-
-    - name: Copy shell script
-      ansible.builtin.copy:
-        src: files/restart-unhealthy.sh
-        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.sh"
-        owner: "{{ restart_docker_unhealthy_cron_user }}"
-        group: "{{ restart_docker_unhealthy_cron_user }}"
+    - name: Add execute permissions to restart-unhealthy.sh
+      ansible.builtin.file:
+        path: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.sh"
         mode: "0750"
 
     - name: Validate systemd files
