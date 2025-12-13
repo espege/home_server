@@ -1,0 +1,27 @@
+#!/bin/bash
+
+LOG_DESTINATION="/var/log/docker_restart.log"
+
+function append_to_log() {
+    MESSAGE=$1
+    if [ -z "$LOG_DESTINATION" ]; then
+        echo "No known log destination. Exiting."
+        return 1
+    fi
+    if [ -z "$MESSAGE" ]; then
+        echo "Message is empty. Exiting."
+        return 1
+    fi
+    echo "--- $(date) --- $MESSAGE ---" >> $LOG_DESTINATION
+    # Cleanup
+    tail -n 1000 $LOG_DESTINATION > "${LOG_DESTINATION}.tmp" && mv "${LOG_DESTINATION}.tmp" $LOG_DESTINATION
+}
+
+append_to_log "Checking for unhealthy pods to restart if required"
+UNHEALTHY_CONTAINERS=$(docker ps -q -f health=unhealthy)
+if [ -n "$UNHEALTHY_CONTAINERS" ]; then
+    append_to_log "Restarting unhealthy containers: $UNHEALTHY_CONTAINERS"
+    echo "$UNHEALTHY_CONTAINERS" | xargs docker restart
+else
+    append_to_log "No unhealthy containers found"
+fi

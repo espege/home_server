@@ -1,0 +1,69 @@
+- name: Run as user
+  become: true
+  become_user: "{{ restart_docker_unhealthy_cron_user }}"
+  tags:
+    - docker_unhealthy_restart
+  block:
+    - name: Get current user UID
+      ansible.builtin.command: "id -u {{ restart_docker_unhealthy_cron_user }}"
+      register: restart_docker_unhealthy_uid_result
+      changed_when: false
+
+    - name: Set Fact
+      ansible.builtin.set_fact:
+        restart_docker_unhealthy_uid: "{{ restart_docker_unhealthy_uid_result.stdout }}"
+
+    - name: Fail when running as root
+      ansible.builtin.fail:
+        msg: "Running as root is notimplemented"
+      when: restart_docker_unhealthy_uid == 'root'
+
+    - name: Create systemd user path
+      ansible.builtin.file:
+        path: "{{ restart_docker_unhealthy_systemd_user_path }}"
+        state: directory
+        mode: "0750"
+        owner: "{{ restart_docker_unhealthy_cron_user }}"
+        group: "{{ restart_docker_unhealthy_cron_user }}"
+
+    - name: Create docker restart service
+      ansible.builtin.template:
+        src: .config/systemd/user/restart-unhealthy.service.j2
+        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.service"
+        owner: "{{ restart_docker_unhealthy_cron_user }}"
+        group: "{{ restart_docker_unhealthy_cron_user }}"
+        mode: "0640"
+
+    - name: Create docker restart timer
+      ansible.builtin.template:
+        src: .config/systemd/user/restart-unhealthy.timer.j2
+        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.timer"
+        owner: "{{ restart_docker_unhealthy_cron_user }}"
+        group: "{{ restart_docker_unhealthy_cron_user }}"
+        mode: "0640"
+
+    - name: Copy shell script
+      ansible.builtin.copy:
+        src: files/restart-unhealthy.sh
+        dest: "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.sh"
+        owner: "{{ restart_docker_unhealthy_cron_user }}"
+        group: "{{ restart_docker_unhealthy_cron_user }}"
+        mode: "0750"
+
+    - name: Validate systemd files
+      ansible.builtin.command: "systemd-analyze verify {{ item }}"
+      loop:
+        - "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.service"
+        - "{{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.timer"
+      changed_when: false
+
+    - name: Enable restart-unhealthy timer
+      ansible.builtin.systemd_service:
+        name: restart-unhealthy.timer
+        enabled: true
+        state: started
+        scope: user
+        daemon_reexec: true
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ restart_docker_unhealthy_uid }}"
+      #   DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ restart_docker_unhealthy_uid }}/bus"

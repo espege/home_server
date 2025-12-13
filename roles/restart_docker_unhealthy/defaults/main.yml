@@ -1,0 +1,3 @@
+restart_docker_unhealthy_cron_timer: "*:0/5"
+restart_docker_unhealthy_cron_user: ansible
+restart_docker_unhealthy_systemd_user_path: "/home/{{ restart_docker_unhealthy_cron_user }}/.config/systemd/user"

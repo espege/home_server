@@ -1,0 +1,10 @@
+[Unit]
+Description=Restart unhealthy docker containers
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+ExecStart={{ restart_docker_unhealthy_systemd_user_path }}/restart-unhealthy.sh
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run docker unhealthy restart every {{ restart_docker_unhealthy_cron_timer }} minutes
+Requires=restart-unhealthy.service
+After=docker.service
+Wants=docker.service
+
+[Timer]
+OnCalendar={{ restart_docker_unhealthy_cron_timer }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
