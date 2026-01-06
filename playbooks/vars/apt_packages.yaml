@@ -14,3 +14,8 @@ software:
     repo:
     useraccount:
     signed_repo_info:
+  - package: 'jq'
+    check_svc: false
+    repo:
+    useraccount:
+    signed_repo_info:

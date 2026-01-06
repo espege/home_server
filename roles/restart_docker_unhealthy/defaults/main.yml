@@ -1,3 +1,7 @@
-restart_docker_unhealthy_cron_timer: "*:0/5"
+restart_docker_unhealthy_cron_timer: "*:0/15"
 restart_docker_unhealthy_cron_user: ansible
 restart_docker_unhealthy_systemd_user_path: "/home/{{ restart_docker_unhealthy_cron_user }}/.config/systemd/user"
+
+# Cascading restart settings
+restart_docker_unhealthy_cascading_container: "GlueTun-Nord" # Parent container to monitor
+restart_docker_unhealthy_cascading_restart_containers: "qbittorrent-nox jackett flaresolverr" # Child containers to restart

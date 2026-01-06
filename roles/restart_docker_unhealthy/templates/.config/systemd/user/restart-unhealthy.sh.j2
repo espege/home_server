@@ -17,11 +17,50 @@ function append_to_log() {
     tail -n 1000 $LOG_DESTINATION > "${LOG_DESTINATION}.tmp" && mv "${LOG_DESTINATION}.tmp" $LOG_DESTINATION
 }
 
+function restart_container() {
+    CONTAINER_ID=$1
+    CASCADE_CONTAINER_NAME="{{ restart_docker_unhealthy_cascading_container }}"
+    CASCADE_CONTAINER_DEPENDANT_NAMES="{{ restart_docker_unhealthy_cascading_restart_containers }}"
+    if [ -z "$CONTAINER_ID" ]; then
+        echo "No container ID provided. Exiting."
+        return 1
+    fi
+    CONTAINER_NAME=$(get_container_name $CONTAINER_ID)
+    append_to_log "Unhealthy container found: $CONTAINER_NAME"
+    docker restart $CONTAINER_ID
+    if [[ "$CONTAINER_NAME" == $CASCADE_CONTAINER_NAME ]]; then
+        append_to_log "Cascading VPN dependent containers"
+        for DEPENDANT_CONTAINER in $CASCADE_CONTAINER_DEPENDANT_NAMES; do
+            DEPENDANT_CONTAINER_ID=$(docker ps -q --filter "name=$DEPENDANT_CONTAINER")
+            if [ -n "$DEPENDANT_CONTAINER_ID" ]; then
+                append_to_log "Restarting dependent container: $DEPENDANT_CONTAINER"
+                docker restart $DEPENDANT_CONTAINER_ID
+            else
+                append_to_log "No dependent container found for: $DEPENDANT_CONTAINER"
+            fi
+        done
+    fi
+}
+
+function get_container_name() {
+    CONTAINER_ID=$1
+    if [ -z "$CONTAINER_ID" ]; then
+        echo "No container ID provided. Exiting."
+        return 1
+    fi
+    CONTAINER_NAME=$(docker ps -a --format=json --filter id=$CONTAINER_ID | jq .Names -r)
+    echo "$CONTAINER_NAME"
+}
+
 append_to_log "Checking for unhealthy pods to restart if required"
 UNHEALTHY_CONTAINERS=$(docker ps -q -f health=unhealthy)
 if [ -n "$UNHEALTHY_CONTAINERS" ]; then
-    append_to_log "Restarting unhealthy containers: $UNHEALTHY_CONTAINERS"
-    echo "$UNHEALTHY_CONTAINERS" | xargs docker restart
-else
-    append_to_log "No unhealthy containers found"
+    if [[ "$UNHEALTHY_CONTAINERS" == *" "* ]]; then
+        for CONTAINER in $UNHEALTHY_CONTAINERS; do
+            restart_container $CONTAINER
+        done
+    else
+        restart_container $UNHEALTHY_CONTAINERS
+    fi
+    append_to_log "Finished restarting unhealthy containers"
 fi
