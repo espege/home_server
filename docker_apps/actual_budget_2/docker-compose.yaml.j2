@@ -1,0 +1,25 @@
+services:
+  actual_server:
+    container_name: actual_2
+    image: actualbudget/actual-server:latest-alpine
+    networks:
+      - actual_budget_2
+    ports:
+      - 5007:5006
+    environment:
+      TZ: ${TZ}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.actual2.rule=Host(`koko.${public_domain_name}`)
+      - traefik.http.routers.actual2.entrypoints=websecure
+      - traefik.http.middlewares.actual2.headers.customrequestheaders.Host=koko.${public_domain_name}
+      - traefik.http.services.actual2.loadbalancer.server.port=5006
+
+    volumes:
+      - ${docker_volume_path}/{{ docker_app }}/actual-data:/data
+    restart: unless-stopped
+
+networks:
+  actual_budget_2:
+    name: actual_network_2
+    driver: bridge

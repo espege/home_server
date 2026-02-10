@@ -9,7 +9,7 @@ services:
       ONEDRIVE_GID: ${gid}
       ONEDRIVE_DISPLAY_CONFIG: 1
       ONEDRIVE_RESYNC: 0 # Default = 0
-    cpus: 3
+    cpus: 4
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=1  # Recommended if using ipv4 only
     volumes:
