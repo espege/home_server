@@ -70,8 +70,8 @@
       ansible.builtin.include_tasks:
         file: 'bindings_and_volumes.yaml'
 
-    # If traefik is among docker apps and connect_to_traefik, add current app networks to Traefik
-    - name: Docker Networks | Add networks to Traefik | {{ docker_app }}
+    # Ensure external networks are created and connected to Traefik if required
+    - name: Docker Networks | Create External networks and connect to Traefik | {{ docker_app }}
       ansible.builtin.include_tasks:
         file: 'generate_networks.yaml'
       loop: "{{ docker_compose_contents.networks | default({}) | dict2items }}"
@@ -79,10 +79,9 @@
         label: "{{ network_item.value.name | default(network_item.key) }}"
         loop_var: 'network_item'
       when:
-        - current_loop_facts['connect_to_traefik'] is defined
-        - current_loop_facts['connect_to_traefik'] | default(false) is truthy
-        - docker_apps_folders is defined
-        - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
+        - network_item.value.external is defined
+        - network_item.value.external | default(false) is truthy
+
 
     - name: Set fact for env files
       ansible.builtin.set_fact:
@@ -106,10 +105,17 @@
 
     - name: .Env File Management | {{ docker_app }}
       tags: env_files
-      when: env_files | length > 0
       become: "{{ output_local | ternary(false, true) }}"
       delegate_to: "{{ output_local | default(omit) | ternary('localhost', inventory_hostname) }}"
       block:
+        - name: Create empty env file | {{ docker_app }}
+          ansible.builtin.file:
+            dest: "{{ sanitized_destination_compose_directory }}/stack.env"
+            mode: '0600'
+            state: touch
+          register: new_env_file
+          when: env_files | length == 0
+        
         - name: Generate base env files | {{ docker_app }}
           ansible.builtin.template:
             src: "{{ env_file.path }}"
@@ -120,6 +126,7 @@
             label: "{{ env_file.path | basename }}"
             loop_var: env_file
           register: generated_env_files
+          when: env_files | length > 0
 
         - name: Add common env variables | {{ docker_app }}
           ansible.builtin.blockinfile:
@@ -127,7 +134,7 @@
             path: "{{ item.dest }}"
             mode: '0600'
             block: "{{ docker_compose_generator_mandatory_env_file_vars }}"
-          loop: "{{ generated_env_files.results }}"
+          loop: "{{ generated_env_files.results + (new_env_file | selectattr('path', 'defined') | list) }}"
           loop_control:
             label: "{{ item.dest | basename }}"
             loop_var: item

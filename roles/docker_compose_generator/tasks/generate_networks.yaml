@@ -1,10 +1,19 @@
 ---
-- name: Set network name fact
+- name: Set network facts
   ansible.builtin.set_fact:
     network_item_name: "{{ network_item.value.name | default(network_item.key) }}"
+    network_item_internal: "{{ network_item.value.internal | default(false) }}"
+    network_item_driver: "{{ network_item.value.driver | default('bridge') }}"
+    network_item_enable_ipv4: "{{ network_item.value.enable_ipv4 | default(true) }}"
+    network_item_enable_ipv6: "{{ network_item.value.enable_ipv6 | default(false) }}"
 
 - name: Traefik networks | Create external networks
   delegate_to: localhost
+  when:
+    - current_loop_facts['connect_to_traefik'] is defined
+    - current_loop_facts['connect_to_traefik'] | default(false) is truthy
+    - docker_apps_folders is defined
+    - docker_apps_folders.files | selectattr('path', 'search', 'traefik') | list | length > 0
   become: false
   tags:
     - traefik_networks
@@ -39,3 +48,11 @@
                 driver: bridge
                 external: true
               {% endfilter %}
+
+- name: Create docker external network | {{ network_item_name }}
+  community.docker.docker_network:
+    name: "{{ network_item_name }}"
+    internal: "{{ network_item_internal }}"
+    driver: "{{ network_item_driver }}"
+    enable_ipv4: "{{ network_item_enable_ipv4 }}"
+    enable_ipv6: "{{ network_item_enable_ipv6 }}"
