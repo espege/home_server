@@ -11,6 +11,7 @@ services:
      POSTGRES_USER: ${pg_username}
      POSTGRES_PASSWORD: ${pg_password}
      POSTGRES_DB: semaphore
+
   semaphore:
     restart: unless-stopped
     ports:
@@ -19,6 +20,7 @@ services:
     image: semaphoreui/semaphore:latest
     networks:
      - semaphore
+     - registry_network
     environment:
       TZ: ${TZ}
       SEMAPHORE_DB_USER: ${sempahore_db_user}
@@ -49,10 +51,15 @@ volumes:
   semaphore-postgres:
 
 networks:
-  semaphore:
-    name: semaphore
+  {{ docker_app }}:
+    name: {{ docker_app }}
     driver: bridge
     ipam:
       config:
         - subnet: "${semaphore_subnet}"
+    external: true
+  registry:
+    name: registry_network
+    driver: bridge
+    internal: true
     external: true
