@@ -3,11 +3,15 @@ services:
     image: library/traefik:latest         # Review traefik documentation https://doc.traefik.io/traefik/
     container_name: traefik
     networks:
+      - registry_network
+      - semaphore
+      - actual_network_2
+      - nginx_network
+      - nginx_static
       - nordvpn
       - plex
       - actual_network
       - portainer_network
-      - semaphore
     command:
       - --api.insecure={{ traefik.API_INSECURE | default('false') }}
       - --api={{ traefik.API_INSECURE | default('true') }}
@@ -51,6 +55,27 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${docker_volume_path}/{{ docker_app }}/letsencrypt:/letsencrypt
 networks:
+# BEGIN NETWORK REGISTRY_NETWORK
+  registry_network:
+    driver: bridge
+    internal: True
+    external: true
+# END NETWORK REGISTRY_NETWORK
+# BEGIN NETWORK ACTUAL_NETWORK_2
+  actual_network_2:
+    driver: bridge
+    external: true
+# END NETWORK ACTUAL_NETWORK_2
+# BEGIN NETWORK NGINX_NETWORK
+  nginx_network:
+    driver: bridge
+    external: true
+# END NETWORK NGINX_NETWORK
+# BEGIN NETWORK NGINX_STATIC
+  nginx_static:
+    driver: bridge
+    external: true
+# END NETWORK NGINX_STATIC
 # BEGIN NETWORK NORDVPN
   nordvpn:
     driver: bridge
@@ -59,6 +84,7 @@ networks:
 # BEGIN NETWORK SEMAPHORE
   semaphore:
     driver: bridge
+    internal: False
     external: true
 # END NETWORK SEMAPHORE
 # BEGIN NETWORK PLEX

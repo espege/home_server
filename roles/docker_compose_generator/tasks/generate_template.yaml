@@ -81,7 +81,7 @@
       when:
         - network_item.value.external is defined
         - network_item.value.external | default(false) is truthy
-
+        - docker_app != 'traefik' # We manage traefik networks separately to avoid circular dependency
 
     - name: Set fact for env files
       ansible.builtin.set_fact:
@@ -115,7 +115,7 @@
             state: touch
           register: new_env_file
           when: env_files | length == 0
-        
+
         - name: Generate base env files | {{ docker_app }}
           ansible.builtin.template:
             src: "{{ env_file.path }}"

@@ -7,6 +7,21 @@
     network_item_enable_ipv4: "{{ network_item.value.enable_ipv4 | default(true) }}"
     network_item_enable_ipv6: "{{ network_item.value.enable_ipv6 | default(false) }}"
 
+- name: Docker external network | {{ network_item_name }}
+  community.docker.docker_network:
+    name: "{{ network_item_name }}"
+    internal: "{{ network_item_internal }}"
+    driver: "{{ network_item_driver }}"
+    enable_ipv4: "{{ network_item_enable_ipv4 }}"
+    enable_ipv6: "{{ network_item_enable_ipv6 }}"
+    state: "{{ current_loop_facts['state'] | default('present') }}"
+    ipam_config: "{{ network_item.value.ipam | default(omit) }}"
+  register: created_network
+
+- ansible.builtin.debug:
+    var: created_network
+    verbosity: 1
+
 - name: Traefik networks | Create external networks
   delegate_to: localhost
   when:
@@ -44,15 +59,8 @@
             state: "{{ current_loop_facts['state'] | default('present') }}"
             block: |
               {% filter indent(width=2, first=true) %}
-              {{ network_item_name }}:
-                driver: bridge
+              {{ created_network.network.Name }}:
+                driver: {{ created_network.network.Driver }}
+                internal: {{ created_network.network.Internal }}
                 external: true
               {% endfilter %}
-
-- name: Create docker external network | {{ network_item_name }}
-  community.docker.docker_network:
-    name: "{{ network_item_name }}"
-    internal: "{{ network_item_internal }}"
-    driver: "{{ network_item_driver }}"
-    enable_ipv4: "{{ network_item_enable_ipv4 }}"
-    enable_ipv6: "{{ network_item_enable_ipv6 }}"

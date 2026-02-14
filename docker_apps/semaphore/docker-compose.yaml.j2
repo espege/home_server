@@ -20,7 +20,6 @@ services:
     image: semaphoreui/semaphore:latest
     networks:
      - semaphore
-     - registry_network
     environment:
       TZ: ${TZ}
       SEMAPHORE_DB_USER: ${sempahore_db_user}
@@ -37,6 +36,9 @@ services:
       SEMAPHORE_ACCESS_KEY_ENCRYPTION: ${semaphore_access_key_encryption}
       SEMAPHORE_SSH_PORT: 22 # Used to connect to host
       SEMAPHORE_SSH_HOST: ${ansible_host}
+      SEMAPHORE_RUNNER_REGISTRATION_TOKEN: ${semaphore_runner_registration_token}
+      SEMAPHORE_USE_REMOTE_RUNNER: "${semaphore_use_remote_runner}"
+
     extra_hosts:
       - host.docker.internal:${ansible_host}
     labels:
@@ -54,12 +56,4 @@ networks:
   {{ docker_app }}:
     name: {{ docker_app }}
     driver: bridge
-    ipam:
-      config:
-        - subnet: "${semaphore_subnet}"
-    external: true
-  registry:
-    name: registry_network
-    driver: bridge
-    internal: true
     external: true
