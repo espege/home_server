@@ -44,7 +44,7 @@
         sanitized_destination_compose_directory: "{{ remote_directory }}/{{ docker_app }}"
         docker_app_install_state: "{{ current_loop_facts['state'] | default('present') }}"
         output_local: "{{ current_loop_facts['local_compose_output'] | default(false) }}"
-        volume_structure_copied: false
+        volume_structure_copied: false # This should run only once per docker stack, set in copy_file_structure task
 
     - name: Ansible | Set Fact | Docker Compose Content | {{ docker_app }}
       ansible.builtin.set_fact:
@@ -160,12 +160,12 @@
         - current_loop_facts['backup_volumes'] is defined
         - current_loop_facts['backup_volumes'] | length > 0
 
-    - name: Ubuntu | Firewall | Add rules for {{ docker_app }}
-      ansible.builtin.include_role:
-        name: ufw_config
-      vars:
-        ufw_config_ruleset: "{{ current_loop_facts['ufw'] }}"
-      tags: firewall
-      when:
-        - current_loop_facts['ufw'] is defined
-        - current_loop_facts['ufw'] | length > 0
+    # - name: Ubuntu | Firewall | Add rules for {{ docker_app }}
+    #   ansible.builtin.include_role:
+    #     name: ufw_config
+    #   vars:
+    #     ufw_config_ruleset: "{{ current_loop_facts['ufw'] }}"
+    #   tags: firewall
+    #   when:
+    #     - current_loop_facts['ufw'] is defined
+    #     - current_loop_facts['ufw'] | length > 0
