@@ -10,7 +10,7 @@
 
     - name: Add Docker Repository
       ansible.builtin.apt_repository:
-        repo: "deb [arch={{ ansible_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ host_architecture }}] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
         filename: docker
         state: "{{ docker_compose_generator_docker_install_status | ternary('present', 'absent') }}"
 

@@ -1,5 +1,6 @@
 ---
 ansible_host: 192.168.0.50
+host_architecture:  amd64
 zfs_pool_name: micropool
 media_group: Media
 lvms:

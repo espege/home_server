@@ -67,10 +67,10 @@
             return_content: true
           register: tag_info
 
-        - name: Extract GHCR.io digest for linux/{{ detected_architecture_docker | trim }}
+        - name: Extract GHCR.io digest for linux/{{ host_architecture | trim }}
           ansible.builtin.set_fact:
             useful_digest: >-
-              {{ (tag_info.json.manifests | selectattr('platform.architecture', 'equalto', detected_architecture_docker | trim) | selectattr('platform.os', 'equalto', 'linux') | list | first).digest | default('') }}
+              {{ (tag_info.json.manifests | selectattr('platform.architecture', 'equalto', host_architecture | trim) | selectattr('platform.os', 'equalto', 'linux') | list | first).digest | default('') }}
 
     - name: Fail for notimplemented registries
       ansible.builtin.fail:

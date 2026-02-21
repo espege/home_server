@@ -10,7 +10,7 @@
 
 - name: Register host architecture variable
   ansible.builtin.set_fact:
-    detected_architecture_docker: >-
+    host_architecture: >-
       {% if host_facts.ansible_facts.ansible_architecture == 'x86_64' %}
       amd64
       {% elif host_facts.ansible_facts.ansible_architecture == 'aarch64' %}
@@ -20,4 +20,15 @@
       {% else %}
       {{ host_facts.ansible_facts.ansible_architecture }}
       {% endif %}
+  run_once: true
+
+- name: Add detected architecture to inventory file
+  delegate_to: localhost
+  become: false
+  ansible.builtin.lineinfile:
+    path: "{{ inventory_dir }}/host_vars/{{ inventory_hostname }}.yaml"
+    insertafter: "^ansible_host:?"
+    regexp: "^host_architecture:.*"
+    line: "host_architecture: {{ host_architecture }}"
+    state: present
   run_once: true
