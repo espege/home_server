@@ -35,7 +35,8 @@ services:
       - traefik.http.routers.plex.tls=true
       - traefik.http.services.plex.loadbalancer.server.port=${plex_external_port}
     volumes:
-      - ${docker_volume_path}/plex:/config
+      - ${docker_volume_path}/plex/config:/config
+      - ${docker_volume_path}/plex/transcode:/transcode
       - type: bind
         source: /${zfs_pool_name}/Videos/Films
         target: /media/movies
