@@ -1,0 +1,56 @@
+---
+
+- debug: var=docker_build_name
+
+- name: Assertions - Mandatory Vars
+  ansible.builtin.assert:
+    that:
+      - docker_build_name is defined
+      - docker_build_name is truthy
+      - docker_build_path is defined
+      - docker_build_path is truthy
+
+- name: Ensure build path {{ docker_build_path }} exists
+  ansible.builtin.file:
+    path: "{{ docker_build_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Docker build block
+  block:
+    - name: Create temp directory for Dockerfile processing
+      ansible.builtin.tempfile:
+        path: "/tmp/"
+        state: directory
+        suffix: _dockerbuild
+      register: temp_docker_dir
+      changed_when: false
+
+    - name: Copy Dockerfile to tmp dir
+      ansible.builtin.copy:
+        src: "{{ docker_build_dockerfile }}"
+        dest: "{{ temp_docker_dir.path }}/"
+        mode: "0770"
+      register: Dockerfile
+
+    - name: Build {{ docker_build_name }}
+      community.docker.docker_image_build:
+        name: "{{ docker_build_name }}"
+        path: "{{ docker_build_path }}"
+        dockerfile: "{{ Dockerfile.dest }}"
+        secrets: "{{ docker_build_secrets }}"
+        args : "{{ docker_build_args }}"
+        outputs:
+          - type: "{{ docker_build_type }}"
+        tag: "{{ docker_build_tag }}"
+        rebuild: "{{ docker_build_force_rebuild | ternary('always', 'never') }}"
+
+  always:
+  - name: Remove temp directory | Always Block
+    become: false
+    delegate_to: localhost
+    ansible.builtin.file:
+      path: "{{ temp_docker_dir.path }}"
+      state: absent
+    when: temp_docker_dir is defined and temp_docker_dir.path is defined
+    changed_when: false

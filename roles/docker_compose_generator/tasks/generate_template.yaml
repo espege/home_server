@@ -160,6 +160,8 @@
         - current_loop_facts['backup_volumes'] is defined
         - current_loop_facts['backup_volumes'] | length > 0
 
+    # Removed: UFW not used by docker
+
     # - name: Ubuntu | Firewall | Add rules for {{ docker_app }}
     #   ansible.builtin.include_role:
     #     name: ufw_config

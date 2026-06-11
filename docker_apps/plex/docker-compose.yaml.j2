@@ -24,7 +24,7 @@ services:
       PLEX_CLAIM: ${plex_claim_id}
       ADVERTISE_IP: http://${ansible_host}:32400
       HOSTNAME: ${plex_hostname}
-      ALLOWED_NETWORKS: ${local_subnet_range}
+      ALLOWED_NETWORKS: "${local_subnet_range}, {{ plex_config.plex_subnet }}"
       CHANGE_CONFIG_DIR_OWNERSHIP: false
       PLEX_UID: ${plex_uid}
       PLEX_GID: ${plex_gid}
@@ -56,3 +56,6 @@ networks:
     name: plex
     driver: bridge
     external: true
+    ipam:
+      config:
+        - subnet: {{ plex_config.plex_subnet }}

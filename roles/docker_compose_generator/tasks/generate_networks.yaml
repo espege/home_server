@@ -15,7 +15,7 @@
     enable_ipv4: "{{ network_item_enable_ipv4 }}"
     enable_ipv6: "{{ network_item_enable_ipv6 }}"
     state: "{{ current_loop_facts['state'] | default('present') }}"
-    ipam_config: "{{ network_item.value.ipam | default(omit) }}"
+    ipam_config: "{{ network_item.value.ipam.config | default(omit) }}"
   register: created_network
 
 - ansible.builtin.debug:

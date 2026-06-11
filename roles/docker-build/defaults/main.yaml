@@ -1,0 +1,12 @@
+---
+
+docker_build_registry_host: localhost
+docker_build_registry_port: 5000
+docker_build_registry_image_name: null
+docker_build_file: Dockerfile
+docker_build_args: {}
+docker_build_secrets: []
+docker_build_type: docker
+docker_build_tag: "latest"
+docker_build_dockerfile: "Dockerfile"
+docker_build_force_rebuild: false
