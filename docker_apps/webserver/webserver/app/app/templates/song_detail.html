@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ song.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0 1.5rem;
+        }
+
+        .score-card {
+            min-height: 140px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            text-decoration: none;
+            color: var(--md-sys-color-on-surface);
+            background: linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06));
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 18px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .score-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 60%);
+            pointer-events: none;
+        }
+
+        .score-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
+            border-color: rgba(255, 255, 255, 0.24);
+        }
+
+        .score-card {
+            animation: scoreCardIn 0.45s ease both;
+        }
+
+        .score-card:nth-child(2n) {
+            animation-delay: 0.06s;
+        }
+
+        .score-card:nth-child(3n) {
+            animation-delay: 0.12s;
+        }
+
+        .score-card:nth-child(4n) {
+            animation-delay: 0.18s;
+        }
+
+        @keyframes scoreCardIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .score-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+        }
+
+        .score-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .score-badge {
+            margin-top: 0.45rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            background: rgba(255, 255, 255, 0.18);
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary {
+
+            padding: 0.5rem 1rem;
+            background-color: var(--md-sys-color-secondary);
+            color: var(--md-sys-color-on-secondary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .media-links ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .media-links li {
+            padding: 0.5rem 0;
+        }
+
+        .media-links a {
+            color: var(--md-sys-color-primary);
+            text-decoration: none;
+        }
+
+        .media-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Media cards (sidebar) */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .media-card {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem;
+            min-height: 56px;
+            text-decoration: none;
+            color: var(--md-sys-color-on-surface);
+            background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            transition: transform 0.16s ease, box-shadow 0.16s ease;
+            overflow: hidden;
+        }
+
+        .media-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+        }
+
+        .media-icon {
+            font-size: 1.25rem;
+            width: 34px;
+            text-align: center;
+        }
+
+        .media-title {
+            font-size: 0.85rem;
+            line-height: 1.2;
+            color: var(--md-sys-color-on-surface);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="main-content-wrapper">
+            <div class="main-content">
+                <h1>{{ song.title }}</h1>
+                <h2>Partitions</h2>
+                {% if song.scores %}
+                <div class="score-grid">
+                    {% for score in song.scores %}
+                    {% set score_name = score.name | trim %}
+                    {% set score_file = score.file %}
+                    {% set score_icon = '🪗' if 'accordeon' in score_name|lower or 'accordéon' in score_name|lower else '🎵' %}
+                    <a href="{{ url_for('search.serve_file', song_id=song.id, filename=score_file) }}"
+                        class="score-card" target="_blank" title="{{ score_name }}">
+                        <div class="score-icon">{{ score_icon }}</div>
+                        <div class="score-title">{{ score_name }}</div>
+                        {% if ".pdf" in score_file | lower %}
+                        <span class="score-badge">PDF</span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>No scores available</p>
+                {% endif %}
+                <h2>Compositeur</h2>
+                {% if song.composers %}
+                <ul>
+                    {% for c in song.composers %}
+                    <li>{{ c }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>Aucun compositeur associé</p>
+                {% endif %}
+
+                <h2>Interprètes</h2>
+                {% if song.interpreters %}
+                <ul>
+                    {% for interpreter in song.interpreters %}
+                    <li>{{ interpreter }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>n/d</p>
+                {% endif %}
+            </div>
+            <aside class="sidebar">
+                <div class="sidebar-title">Médias</div>
+                {% if song.media_links %}
+                <div class="media-grid">
+                    {% for media_link in song.media_links %}
+                        {% set link_lower = media_link | lower %}
+                        {% if 'youtube' in link_lower %}
+                            {% set icon = '▶️' %}
+                        {% elif 'spotify' in link_lower %}
+                            {% set icon = '🎧' %}
+                        {% else %}
+                            {% set icon = '🔗' %}
+                        {% endif %}
+
+                        <a class="media-card" href="{{ media_link }}" target="_blank" rel="noopener">
+                            <div class="media-icon">{{ icon }}</div>
+                            <div class="media-title">{{ media_link }}</div>
+                        </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="branch">
+                    <div class="branch-title">n/d</div>
+                </div>
+                {% endif %}
+            </aside>
+        </div>
+
+
+        <!-- <hr> -->
+        <div class="footer-nav">
+            <a href="{{ url_for('search.index') }}" class="btn-secondary">Back to Search</a>
+        </div>
+    </div>
+</body>
+
+</html>

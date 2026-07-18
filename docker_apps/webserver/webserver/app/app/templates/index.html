@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recherche musicale</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <header>
+        <h1>Du côté de chez Trad</h1>
+    </header>
+    <div class="main-container">
+        <div class="main-content-wrapper">
+            <main class="main-content">
+                <form id="search-form">
+                    <input type="text" id="search-input" placeholder="Rechercher un morceau...">
+                    <button type="submit">Rechercher</button>
+                </form>
+                <div id="results">
+                    <!-- Search results will be displayed here -->
+                </div>
+            </main>
+
+            <aside class="sidebar">
+                <div class="sidebar-title">🎵 Sous-genres</div>
+                <div class="mindmap">
+                    <div class="mindmap-center">Sous-genres musicaux</div>
+                    <div class="mindmap-branches">
+                        {% if subgenres %}
+                        {% for subgenre in subgenres %}
+                        <div class="branch">
+                            <div class="branch-title" onclick="searchByGenreOrSubGenre('subgenre', '{{ subgenre }}')">{{ subgenre }}</div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="branch">
+                            <div class="branch-title">No subgenres yet</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="sidebar-title">🎵 Genres</div>
+                <div class="mindmap">
+                    <div class="mindmap-center">Genres</div>
+                    <div class="mindmap-branches">
+                        {% if genres %}
+                        {% for genre in genres %}
+                        <div class="branch">
+                            <div class="branch-title" onclick="searchByGenreOrSubGenre('genre', '{{ genre }}')">{{ genre }}</div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="branch">
+                            <div class="branch-title">No genres yet</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </aside>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+</body>
+
+</html>

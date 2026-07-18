@@ -1,0 +1,33 @@
+services:
+  music_website:
+    image: python:3.14-alpine
+    command:
+      ./start.sh
+    container_name: music_website
+    working_dir: /app
+    networks:
+      - music_website
+    ports:
+      - 5001:5000
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+    environment:
+      TZ: ${TZ}
+      PYTHONPATH: /app
+      FILES_DIR: /app/scores
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.music_website.rule=Host(`trad.${public_domain_name}`)
+      - traefik.http.routers.music_website.entrypoints=websecure
+      - traefik.http.middlewares.music_website.headers.customrequestheaders.Host=trad.${public_domain_name}
+      - traefik.http.services.music_website.loadbalancer.server.port=5000
+    volumes:
+      - ${docker_volume_path}/{{ docker_app }}/app:/app
+      - ${docker_volume_path}/{{ docker_app }}/data/seed/seed_db.py:/app/seed_db.py:ro
+      - ${docker_volume_path}/{{ docker_app }}/data/scores:/app/scores:ro
+
+networks:
+  music_website:
+    name: music_website_network
+    driver: bridge
