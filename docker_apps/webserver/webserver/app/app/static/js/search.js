@@ -113,3 +113,106 @@ function searchByGenreOrSubGenre(searchType, value) {
             resultsContainer.innerHTML = '<p style="color: #CF6679; text-align: center; padding: 40px 0;">Error fetching results. Please try again later.</p>';
         });
 }
+
+// --- Upload modal and form handling ---
+document.addEventListener('DOMContentLoaded', function() {
+    const floating = document.getElementById('floating-add');
+    const modal = document.getElementById('upload-modal');
+    const uploadForm = document.getElementById('upload-form');
+    const cancelBtn = document.getElementById('upload-cancel');
+    const feedback = document.getElementById('upload-feedback');
+
+    function openModal() {
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        feedback.textContent = '';
+        if (uploadForm) uploadForm.reset();
+    }
+
+    if (floating && modal) {
+        floating.addEventListener('click', openModal);
+    }
+
+    if (cancelBtn && modal) {
+        cancelBtn.addEventListener('click', closeModal);
+    }
+
+    // close button (×)
+    const closeBtn = document.getElementById('upload-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    // close on backdrop click
+    if (modal) {
+        modal.addEventListener('click', (ev) => {
+            if (ev.target === modal) closeModal();
+        });
+    }
+
+    // close on Escape
+    window.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape' && modal && modal.style.display === 'flex') {
+            closeModal();
+        }
+    });
+
+    const allowedExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+    function clientAllowed(filename) {
+        if (!filename) return false;
+        const lower = filename.toLowerCase();
+        return allowedExt.some(ext => lower.endsWith(ext));
+    }
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', (ev) => {
+            ev.preventDefault();
+            feedback.textContent = '';
+
+            const title = document.getElementById('upload-title').value.trim();
+            const composer = document.getElementById('upload-composer').value.trim();
+            const fileInput = document.getElementById('upload-file');
+
+            if (!title) { feedback.textContent = 'Title is required'; return; }
+            if (!composer) { feedback.textContent = 'Composer is required'; return; }
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) { feedback.textContent = 'Please select a file'; return; }
+
+            const file = fileInput.files[0];
+            if (!clientAllowed(file.name)) { feedback.textContent = 'Invalid file type'; return; }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('composer', composer);
+            formData.append('score_file', file);
+
+            feedback.textContent = 'Uploading...';
+
+            fetch('/upload-score', {
+                method: 'POST',
+                body: formData
+            }).then(r => r.json().then(body => ({status: r.status, body})))
+            .then(({status, body}) => {
+                if (status >= 200 && status < 300) {
+                    feedback.textContent = 'Upload successful';
+                    uploadForm.reset();
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        modal.setAttribute('aria-hidden', 'true');
+                        feedback.textContent = '';
+                        // refresh list
+                        performSearch(document.getElementById('search-input').value || '');
+                    }, 900);
+                } else {
+                    feedback.textContent = body && body.error ? body.error : 'Upload failed';
+                }
+            }).catch(err => {
+                console.error(err);
+                feedback.textContent = 'Upload failed';
+            });
+        });
+    }
+});

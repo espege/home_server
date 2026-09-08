@@ -398,6 +398,161 @@ button[type="submit"]:active {
     border-left: 2px solid transparent;
 }
 
+/* Floating add button */
+#floating-add {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    cursor: pointer;
+    z-index: 200;
+}
+
+/* Upload modal */
+.upload-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+    z-index: 250;
+}
+
+.upload-modal-content {
+    background: var(--md-surface);
+    padding: 20px;
+    border-radius: 12px;
+    width: 420px;
+    max-width: calc(100% - 40px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.upload-modal-content h3 {
+    margin-top: 0;
+}
+
+.upload-modal-content label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.upload-modal-content input[type="text"],
+.upload-modal-content input[type="file"] {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--md-outline);
+    background: var(--md-background);
+    color: var(--md-on-background);
+}
+
+.upload-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: auto; /* push to bottom of modal */
+    width: 100%;
+    align-items: center;
+}
+
+.upload-actions button {
+    min-width: 110px;
+    height: 44px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+#upload-feedback {
+    margin-top: 8px;
+    color: var(--md-on-surface);
+}
+
+/* Modal layout improvements */
+.upload-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 20px 18px 20px;
+    animation: modalIn 160ms ease;
+    min-height: 260px; /* ensure enough vertical space so footer can sit at bottom */
+    max-height: 80vh;
+}
+
+.upload-modal-content form { display:flex; flex-direction:column; height:100%; }
+
+.upload-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px 0;
+}
+
+.upload-grid .field { display:flex; flex-direction: column; }
+
+.modal-close {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    background: transparent;
+    border: none;
+    color: var(--md-on-surface);
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(98,0,238,0.2);
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn-secondary {
+    padding: 10px 14px;
+    background: #fff;
+    color: #111;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+@keyframes modalIn {
+    from { transform: translateY(8px); opacity: 0 }
+    to { transform: translateY(0); opacity: 1 }
+}
+
+@media (max-width: 480px) {
+    .upload-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .upload-actions button {
+        width: 100%;
+    }
+}
+
 .sub-branch:hover {
     background: #f9f9f9;
     border-left-color: #45a049;

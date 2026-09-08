@@ -1,7 +1,10 @@
 import json
 import os
+import time
+import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_from_directory
+from werkzeug.utils import secure_filename
 
 from app import db
 from app.models.song import Genre, SubGenre, Song
@@ -94,6 +97,85 @@ def add_song():
     db.session.commit()
 
     return jsonify(song.get_metadata()), 201
+
+
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'}
+
+
+def is_allowed_image_filename(filename: str) -> bool:
+    if not filename:
+        return False
+    _, ext = os.path.splitext(filename.lower())
+    return ext in ALLOWED_IMAGE_EXTENSIONS
+
+
+@search_bp.route('/upload-score', methods=['POST'])
+def upload_score():
+    """Handle uploaded score image and attach it to a song.
+
+    Expects multipart/form-data with fields:
+      - title (required)
+      - composer (required)
+      - score_file (required) file upload (images only)
+      - score_name (optional)
+    """
+    # basic form validation
+    title = (request.form.get('title') or '').strip()
+    composer = (request.form.get('composer') or '').strip()
+    score_name = (request.form.get('score_name') or '').strip()
+
+    if not title:
+        return jsonify({'error': 'Title is required'}), 400
+    if not composer:
+        return jsonify({'error': 'Composer is required'}), 400
+
+    if 'score_file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['score_file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    filename = secure_filename(file.filename)
+    if not is_allowed_image_filename(filename):
+        return jsonify({'error': 'Invalid file type'}), 400
+
+    files_dir = os.getenv('FILES_DIR')
+    if not files_dir:
+        return jsonify({'error': 'Server not configured to store files'}), 500
+
+    # ensure destination exists
+    os.makedirs(files_dir, exist_ok=True)
+
+    # avoid collisions: prefix with uuid
+    unique_prefix = uuid.uuid4().hex
+    safe_filename = f"{unique_prefix}_{filename}"
+    dest_path = os.path.abspath(os.path.join(files_dir, safe_filename))
+    files_dir_abs = os.path.abspath(files_dir)
+
+    # ensure path stays inside files_dir
+    if not dest_path.startswith(files_dir_abs):
+        return jsonify({'error': 'Invalid file path'}), 400
+
+    file.save(dest_path)
+
+    # find or create song
+    song = Song.query.filter_by(title=title).first()
+    if not song:
+        song = Song(title=title)
+        db.session.add(song)
+        db.session.flush()
+
+    # add composer
+    song.add_composer(composer)
+
+    # add score record
+    score_display_name = score_name or filename
+    song.add_score({'name': score_display_name, 'file': safe_filename})
+
+    db.session.commit()
+
+    return jsonify({'message': 'Upload successful', 'song': song.get_metadata()}), 201
 
 
 @search_bp.route('/song/<int:song_id>', methods=['GET'])

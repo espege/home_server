@@ -65,6 +65,38 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+    <!-- Floating upload button -->
+    <button id="floating-add" aria-label="Ajouter une partition">+</button>
+
+    <!-- Upload modal -->
+    <div id="upload-modal" class="upload-modal" aria-hidden="true">
+        <div class="upload-modal-content" role="dialog" aria-modal="true" aria-labelledby="upload-title-label">
+            <button id="upload-close" class="modal-close" aria-label="Close">×</button>
+            <h3 id="upload-title-label">Ajouter une partition</h3>
+            <form id="upload-form">
+                <div class="upload-grid">
+                    <div class="field">
+                        <label for="upload-title">Title (Titre)</label>
+                        <input type="text" name="title" id="upload-title" required>
+                    </div>
+                    <div class="field">
+                        <label for="upload-composer">Composer (Compositeur)</label>
+                        <input type="text" name="composer" id="upload-composer" required>
+                    </div>
+                    <!-- score_name field removed per UI request -->
+                    <div class="field">
+                        <label for="upload-file">File</label>
+                        <input type="file" name="score_file" id="upload-file" accept="image/*" required>
+                    </div>
+                </div>
+                <div class="upload-actions">
+                    <button type="button" id="upload-cancel" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="upload-submit" class="btn-primary">Upload</button>
+                </div>
+                <div id="upload-feedback" role="status" aria-live="polite"></div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>
