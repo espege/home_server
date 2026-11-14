@@ -6,6 +6,26 @@
     - docker_compose
   block:
 
+    - name: Gather facts for the Ansible controller
+      ansible.builtin.setup:
+        gather_subset:
+          - min
+      delegate_to: localhost
+      delegate_facts: true
+      become: false
+
+    - name: Ensure rsync is installed on the Ansible controller
+      ansible.builtin.package:
+        name: rsync
+        state: present
+      delegate_to: localhost
+      become: "{{ hostvars['localhost'].ansible_facts.os_family != 'Darwin' }}"
+
+    - name: Ensure rsync is installed on the managed host
+      ansible.builtin.package:
+        name: rsync
+        state: present
+
     - name: Create {{ docker_compose_generator_default_local_compose_output_path }}
       ansible.builtin.file:
         path: "{{ docker_compose_generator_default_local_compose_output_path }}"

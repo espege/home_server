@@ -9,3 +9,5 @@ compose_files/*
 .ansible/.lock
 .gitignore
 .venv*
+**/__pycache__/
+docker_apps/webserver/webserver/data/

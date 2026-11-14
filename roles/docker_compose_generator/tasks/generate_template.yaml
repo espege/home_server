@@ -79,7 +79,6 @@
         label: "{{ network_item.value.name | default(network_item.key) }}"
         loop_var: 'network_item'
       when:
-        - network_item.value.external is defined
         - network_item.value.external | default(false) is truthy
         - docker_app != 'traefik' # We manage traefik networks separately to avoid circular dependency
 

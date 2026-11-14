@@ -41,6 +41,9 @@ services:
         source: /${zfs_pool_name}/Videos/Films
         target: /media/movies
       - type: bind
+        source: /${zfs_pool_name}/Videos/Movies
+        target: /media/movies2
+      - type: bind
         source: /${zfs_pool_name}/Videos/TV
         target: /media/tv
       - type: bind

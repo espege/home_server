@@ -14,11 +14,16 @@
         filename: docker
         state: "{{ docker_compose_generator_docker_install_status | ternary('present', 'absent') }}"
 
-    - name: Docker + Docker compose install
+    - name: Remove legacy Docker Compose v1
+      ansible.builtin.apt:
+        name: docker-compose
+        state: absent
+
+    - name: Docker + Docker Compose plugin install
       ansible.builtin.apt:
         name:
           - docker-ce
-          - docker-compose
+          - docker-compose-plugin
         update_cache: true
         state: "{{ docker_compose_generator_docker_install_status | ternary('present', 'absent') }}"
 

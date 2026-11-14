@@ -157,3 +157,21 @@ loki.write "grafana_cloud_loki" {
     }
   }
 }
+
+alertmanager.config "default" {
+  global {
+    resolve_timeout = "5m"
+  }
+  route {
+    receiver = "grafana_cloud"
+  }
+  receiver "grafana_cloud" {
+    remote {
+      url = "{{ grafana_config.GCLOUD_ALERTMANAGER_URL }}"
+      basic_auth {
+        username = "{{ grafana_config.GCLOUD_HOSTED_METRICS_ID }}"
+        password = "{{ grafana_config.grafanacloud_rw_api_key }}"
+      }
+    }
+  }
+}

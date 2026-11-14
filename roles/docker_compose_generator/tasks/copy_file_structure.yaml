@@ -9,42 +9,44 @@
         msg: "Directory found for {{ docker_app }} at {{ directory_to_copy.stat.path }}. Copying to {{ remote_directory }}"
         verbosity: 1
 
-    - name: Ansible | Localhost operations
+    - name: Create temp directory for j2 processing
+      ansible.builtin.tempfile:
+        path: "/tmp/"
+        state: directory
+        suffix: _j2tmp
       become: false
-      delegate_to: localhost
-      block:
-        - name: Create temp directory for j2 processing
-          ansible.builtin.tempfile:
-            path: "/tmp/"
-            state: directory
-            suffix: _j2tmp
-          register: temp_j2_dir
-          changed_when: false
+      register: temp_j2_dir
+      changed_when: false
 
-        - name: Copy | Docker App Directory Structure to temp dir
-          ansible.builtin.copy:
-            src: "{{ directory_to_copy.stat.path }}"
-            dest: "{{ temp_j2_dir.path }}/"
-            mode: "preserve"
+    - name: Synchronize | Docker App Directory Structure to remote temp dir {{ temp_j2_dir.path }}
+      ansible.posix.synchronize:
+        src: "{{ directory_to_copy.stat.path }}"
+        dest: "{{ temp_j2_dir.path }}/"
+        mode: push
+        delete: false
+        rsync_opts:
+          - "--exclude=*.venv*/"
+          - "--exclude=venv/"
+      become: false
 
-        - name: Ansible | Find | .j2 files in temp directory
-          ansible.builtin.find:
-            paths: "{{ temp_j2_dir.path }}"
-            patterns: "*.j2"
-            file_type: file
-            recurse: true
-          register: temp_j2_files
+    - name: Ansible | Find | .j2 files in remote temp directory
+      ansible.builtin.find:
+        paths: "{{ temp_j2_dir.path }}"
+        patterns: "*.j2"
+        file_type: file
+        recurse: true
+      register: temp_j2_files
 
-        - name: Ansible | Convert .j2 files in temp dir. Total = {{ temp_j2_files.files | length }}
-          ansible.builtin.template:
-            src: "{{ item.path }}"
-            dest: "{{ item.path | regex_replace('\\.j2$', '') }}"
-            mode: "0770"
-          loop: "{{ temp_j2_files.files }}"
-          loop_control:
-            label: "{{ item.path | regex_replace('\\.j2$', '') | basename }}"
-          when: temp_j2_files is defined and temp_j2_files.files | length > 0
-          changed_when: false
+    - name: Ansible | Convert .j2 files in remote temp dir. Total = {{ temp_j2_files.files | length }}
+      ansible.builtin.template:
+        src: "{{ item.path | regex_replace('^' ~ ((temp_j2_dir.path ~ '/' ~ (directory_to_copy.stat.path | basename) ~ '/') | regex_escape), directory_to_copy.stat.path ~ '/') }}"
+        dest: "{{ item.path | regex_replace('\\.j2$', '') }}"
+        mode: "0770"
+      loop: "{{ temp_j2_files.files }}"
+      loop_control:
+        label: "{{ item.path | regex_replace('\\.j2$', '') | basename }}"
+      when: temp_j2_files is defined and temp_j2_files.files | length > 0
+      changed_when: false
 
     - name: Copy processed directory to final destination {{ remote_directory }}
       ansible.builtin.copy:
@@ -53,17 +55,9 @@
         mode: "preserve"
         owner: "{{ bind_volume_owner }}"
         group: "{{ bind_volume_group }}"
+        remote_src: true
 
   rescue:
-    - name: Remove temp directory | Rescue Block
-      become: false
-      delegate_to: localhost
-      ansible.builtin.file:
-        path: "{{ temp_j2_dir.path }}"
-        state: absent
-      when: temp_j2_dir is defined and temp_j2_dir.path is defined
-      changed_when: false
-
     - name: Fail the task | Rescue Block
       ansible.builtin.fail:
         msg: "Failed to copy and process directory structure for {{ docker_app }}"
@@ -71,7 +65,6 @@
   always:
     - name: Remove temp directory | Always Block
       become: false
-      delegate_to: localhost
       ansible.builtin.file:
         path: "{{ temp_j2_dir.path }}"
         state: absent
