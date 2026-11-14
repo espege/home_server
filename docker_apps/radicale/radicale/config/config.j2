@@ -1,0 +1,33 @@
+[server]
+
+# CalDAV server hostnames separated by a comma
+# IPv4 syntax: address:port
+# IPv6 syntax: [address]:port
+# Hostname syntax (using "getaddrinfo" to resolve to IPv4/IPv6 adress(es)): hostname:port
+# For example: 0.0.0.0:9999, [::]:9999, localhost:9999
+#hosts = localhost:5232
+hosts = 0.0.0.0:5232
+
+[auth]
+
+# Value: none | htpasswd | remote_user | http_remote_user | http_x_remote_user | dovecot | ldap | oauth2 | pam | denyall
+# Authentication is handled by Traefik and passed via X-Remote-User.
+type = http_x_remote_user
+
+[storage]
+
+# Folder for storing local collections, created if not present
+filesystem_folder = /var/lib/radicale/collections
+
+[headers]
+
+# Set CSP to disallow execution of unknown javascript
+# This may become the default in future versions, override if you need a different CSP.
+#
+# NOTE TOM: added this config until it becomes the default in future versions of Radicale.
+#
+Content-Security-Policy = default-src 'self'; object-src 'none'
+
+[web]
+
+prefer_browser_login = True

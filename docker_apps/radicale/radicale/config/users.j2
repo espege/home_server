@@ -1,0 +1,4 @@
+
+{% for user in radicale_config.htpasswd_users %}
+{{ user.username | lower }}:{{ user.password_htpasswd_format }}
+{% endfor %}

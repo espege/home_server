@@ -1,0 +1,37 @@
+services:
+  radicale:
+    image: tomsquest/docker-radicale
+    container_name: radicale
+    init: true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+    networks:
+      - radicale_network
+    environment:
+      - TZ=${TZ}
+    healthcheck:
+      test: curl -f http://127.0.0.1:5232 || exit 1
+      interval: 30s
+      retries: 3
+    restart: unless-stopped
+    volumes:
+      - ${docker_volume_path}/radicale/collections:/var/lib/radicale/collections
+      - ${docker_volume_path}/radicale/config/config:/config/config:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.radicale.middlewares=radicale-auth
+      - traefik.http.middlewares.radicale-auth.basicauth.usersfile=/auth/radicale
+      - traefik.http.middlewares.radicale-auth.basicauth.headerField=X-Remote-User
+      - traefik.http.routers.radicale.rule=Host(`agenda.${public_domain_name}`) || Host(`contacts.${public_domain_name}`)
+      - traefik.http.routers.radicale.entrypoints=websecure
+      - traefik.http.routers.radicale.tls.certresolver=le
+      - traefik.http.services.radicale.loadBalancer.server.port=5232
+
+networks:
+  radicale_network:
+    name: radicale_network
+    driver: bridge
+    external: true

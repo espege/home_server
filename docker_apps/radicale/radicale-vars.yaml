@@ -1,0 +1,11 @@
+
+---
+state: present
+connect_to_traefik: true
+local_compose_output: true
+linux_users:
+  - name: radicale
+    uid: 2999
+    gid: 2999
+bind_volume_owner: radicale
+bind_volume_group: radicale
