@@ -48,11 +48,17 @@ services:
       - S3_REGION=${S3_REGION:-garage}
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
       - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PWD=${SMTP_PWD}
       # Custom environment vars
       - SECRET_PASSWORD=${SECRET_PASSWORD}
       - SUPPORT_EMAIL=${SUPPORT_EMAIL}
     networks:
       - rallly_network
+      - rallly_backend
     volumes:
       # Custom root CA for networks that intercept TLS (corporate proxies).
       # CA_CERT_FILE in .env points at a PEM file on the host and is mounted
@@ -74,6 +80,7 @@ services:
           create_host_path: false
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=rallly_network"
       - "traefik.http.routers.rallyweb.rule=Host(`rdv.${public_domain_name}`)"
       - "traefik.http.routers.rallyweb.entrypoints=websecure"
       - "traefik.http.services.rallyweb.loadbalancer.server.port=3000"
@@ -91,6 +98,8 @@ services:
   db:
     image: postgres:${POSTGRES_VERSION:-14}-alpine
     restart: always
+    networks:
+      - rallly_backend
     volumes:
       # postgres images ≥18 moved PGDATA and expect the volume mounted at
       # /var/lib/postgresql instead of /var/lib/postgresql/data.
@@ -114,6 +123,8 @@ services:
   garage:
     image: dxflrs/garage:v2.3.0
     restart: always
+    networks:
+      - rallly_backend
     volumes:
       - ${docker_volume_path}/${docker_stack_name}/config/garage.toml:/etc/garage.toml:ro
       - garage-meta:/var/lib/garage/meta
@@ -146,3 +157,7 @@ networks:
     name: rallly_network
     driver: bridge
     external: true
+  rallly_backend:
+    name: rallly_backend
+    driver: bridge
+    internal: true
