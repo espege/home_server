@@ -8,7 +8,7 @@ services:
       - "9000:9000"
     networks:
       {{ docker_app }}:
-        ipv4_address: ${portainer_ip}
+        ipv4_address: "{{ portainer_config.portainer_ip }}"
     labels:
       - traefik.enable=true
       - traefik.http.routers.{{ docker_app }}.rule=Host(`{{ docker_app }}.${public_domain_name}`)
@@ -34,7 +34,7 @@ services:
       TZ: ${TZ}
     networks:
       {{ docker_app }}:
-        ipv4_address: ${portainer_agent_ip}
+        ipv4_address: "{{ portainer_config.portainer_agent_ip }}"
     restart: always
     ports:
       - "9001:9001"
@@ -50,7 +50,4 @@ services:
 networks:
   {{ docker_app }}:
     name: {{ docker_app }}_network
-    driver: bridge
-    ipam_config:
-      - subnet: "${subnet}"
-    enable_ipv6: false
+    external: true

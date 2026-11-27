@@ -6,4 +6,4 @@ linux_users:
   - name: onedrive
     comment: 'OneDrive Sync User'
     shell: /bin/bash
-bind_vol_owner: 'onedrive'
+bind_volume_owner: 'onedrive'

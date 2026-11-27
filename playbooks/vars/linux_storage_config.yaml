@@ -26,6 +26,11 @@ pool_folders:
     group: Media
     mode: '2774'
 
+  Videos/Movies:
+    owner: root
+    group: Media
+    mode: '2774'
+
   Torrents/complete:
     owner: qbittorrent-nox
     group: Media

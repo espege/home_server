@@ -6,16 +6,9 @@ linux_users:
   - name: plex
     comment: 'Plex Media Server service account | Created by ansible'
     shell: /usr/sbin/nologin
-bind_vol_owner: plex
-bind_vol_group: "Media"
+bind_volume_owner: plex
+bind_volume_group: "Media"
 linux_extra_groups:
   - Media
-ufw:
-  - rule: allow
-    proto: tcp
-    port: "{{ plex_config.external_port | default('32400') }}"
-    from_ip: "any"
-    to_ip: "{{ ansible_host }}"
-    comment: Allow plex external
 backup_volumes:
   - "{{ docker_compose_generator_default_bind_path }}/plex/config"

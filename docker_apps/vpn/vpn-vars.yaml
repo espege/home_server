@@ -15,5 +15,5 @@ linux_users:
     shell: /usr/sbin/nologin
 linux_extra_groups:
   - Media
-bind_vol_owner: nordvpn
-bind_vol_group: "Media"
+bind_volume_owner: nordvpn
+bind_volume_group: "Media"

@@ -19,8 +19,7 @@
     - name: Debug | Output pool name
       ansible.builtin.debug:
         msg: "Excecuting role zfs_pool_config and this is the value of zfs_pool_name {{ zfs_pool_name }}"
-      tags:
-        - always
+        verbosity: 1
 
     - name: Confirm storage pool directory exists
       ansible.builtin.stat:

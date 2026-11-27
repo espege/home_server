@@ -40,7 +40,7 @@ services:
     tty: true
     labels:
       - traefik.enable=true
-      - traefik.http.routers.torrent.rule=Host(`torrent.${public_domain_name}`) || Host(`torrent.${local_domain_name}`)
+      - traefik.http.routers.torrent.rule=Host(`torrent.${public_domain_name}`)
       - traefik.http.services.torrent.loadbalancer.server.port=8080
       - traefik.http.routers.torrent.entrypoints=websecure
       - traefik.http.routers.torrent.tls=true
@@ -74,7 +74,7 @@ services:
     container_name: jackett
     labels:
       - traefik.enable=true
-      - traefik.http.routers.jackett.rule=Host(`jackett.${public_domain_name}`) || Host(`jackett.${local_domain_name}`)
+      - traefik.http.routers.jackett.rule=Host(`jackett.${public_domain_name}`)
       - traefik.http.services.jackett.loadbalancer.server.port={{ vpn_config.JACKETT_PORT }}
       - traefik.http.routers.jackett.entrypoints=websecure
       - traefik.http.routers.jackett.tls=true

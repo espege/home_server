@@ -12,6 +12,8 @@ services:
       - ${docker_volume_path}/{{ docker_app }}/smb.conf:/etc/samba/smb.conf
       - ${docker_volume_path}/{{ docker_app }}/users.conf:/etc/samba/users.conf
       - /${zfs_pool_name}/{{ onedrive_config.directory_name }}/Pictures/:/shares/onedrive_photos:rw
-      - /${zfs_pool_name}/Videos/TV:/shares/TV:rw
+      - /${zfs_pool_name}/Videos/TV:/shares/Media/Tv:rw
+      - /${zfs_pool_name}/Videos/Films:/shares/Media/Movies:rw
+      - /${zfs_pool_name}/Musique:/shares/Media/Music:rw
       - /{{ lvms['staging'].mount_point }}/automatic_ripping_machine/media/:/shares/arm:rw
     restart: always

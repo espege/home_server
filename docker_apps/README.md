@@ -24,8 +24,8 @@ Expected keys:
 | local_compose_output| bool  | true           | [True, False] | output docker_compose file on ansible controller instead of remote host |
 | linux_users         | map   | {name: plex}   | map with keys: name,comment,shell | create specific users |
 | linux_extra_groups      | list  |  ["media"]  | Standalone Groups | Create linux groups |
-| bind_vol_owner      | string   | plex   | valid user name | override root as default owner for `dict` bind volumes |
-| bind_vol_group | bool | string | "media"  | override root as default group for `dict` bind volumes. Only acceptable values are groups from *linux_extra_groups* |
+| bind_volume_owner      | string   | plex   | valid user name | override root as default owner for `dict` bind volumes |
+| bind_volume_group | bool | string | "media"  | override root as default group for `dict` bind volumes. Only acceptable values are groups from *linux_extra_groups* |
 | ufw      | list(map)   |  {rule: allow, proto: tcp[...]}  | `ufw_config` role inputs | Manage app-specific UFW rules |
 | backup_volumes      | list(string)   |  ["path/to/volume"]  | Specific Docker Volume paths | Adds a cron job to backup these volumes |
 
@@ -78,10 +78,10 @@ flowchart TD
     End((End))
     User{linux_users defined}
     create[Create user]
-    bindvol{bind_vol_owner defined}
+    bindvol{bind_volume_owner defined}
     extra_groups{linux_extra_groups defined}
     create_extra[create groups]
-    bind_vol_extra{bind_vol_group_is_extra defined}
+    bind_vol_extra{bind_volume_group_is_extra defined}
     bind_vol_action[chmod group to FIRST bind_vol_extra]
     chmod[chown docker-compose volumes]
 

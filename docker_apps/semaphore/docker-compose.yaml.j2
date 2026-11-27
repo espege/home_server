@@ -1,5 +1,6 @@
 services:
   postgres:
+    container_name: semaphore_db
     restart: unless-stopped
     image: library/postgres:14
     hostname: postgres
@@ -13,13 +14,14 @@ services:
      POSTGRES_DB: semaphore
 
   semaphore:
+    container_name: semaphore
     restart: unless-stopped
     ports:
       - 3000:3000
-      - 2222:22
     image: semaphoreui/semaphore:latest
     networks:
-     - semaphore
+      semaphore:
+        ipv4_address: ${semaphore_subnet_minus_last_bit}.10
     environment:
       TZ: ${TZ}
       SEMAPHORE_DB_USER: ${sempahore_db_user}
@@ -38,7 +40,6 @@ services:
       SEMAPHORE_SSH_HOST: ${ansible_host}
       SEMAPHORE_RUNNER_REGISTRATION_TOKEN: ${semaphore_runner_registration_token}
       SEMAPHORE_USE_REMOTE_RUNNER: "${semaphore_use_remote_runner}"
-
     extra_hosts:
       - host.docker.internal:${ansible_host}
     labels:
@@ -49,6 +50,24 @@ services:
       - traefik.http.services.semaphore.loadbalancer.server.port=3000
     depends_on:
       - postgres
+
+  sempaphore_runner:
+    container_name: semaphore_runner
+    image: semaphoreui/runner:latest
+    network:
+      semaphore:
+        ipv4_address: ${semaphore_subnet_minus_last_bit}.20
+    environment:
+      SEMAPHORE_WEB_ROOT: http://${docker_stack_name}:3000
+      SEMAPHORE_RUNNER_TOKEN: ${semaphore_runner_token}
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: ${semaphore_runner_private_key_file}
+    extra_hosts:
+      - host.docker.internal:${ansible_host}
+    volumes:
+      - ${docker_volume_path}/${docker_stack_name}/semaphore_runner/config.runner.key:/config.runner.key
+    depends_on:
+      - semaphore
+
 volumes:
   semaphore-postgres:
 
@@ -56,4 +75,6 @@ networks:
   {{ docker_app }}:
     name: {{ docker_app }}
     driver: bridge
+    ipamconfig:
+      - subnet: {{ semaphore.semaphore_subnet }}
     external: true

@@ -4,7 +4,7 @@ local_compose_output: true
 connect_to_traefik: true
 linux_users:
   "{{ samba_config.users | default(current_loop_facts['default_users']) }}"
-bind_vol_owner: 'samba'
+bind_volume_owner: 'samba'
 ufw:
   - rule: allow
     proto: tcp

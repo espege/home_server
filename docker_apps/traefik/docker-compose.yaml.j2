@@ -3,6 +3,7 @@ services:
     image: library/traefik:latest         # Review traefik documentation https://doc.traefik.io/traefik/
     container_name: traefik
     networks:
+      - rallly_network
       - music_website_network
       - registry_network
       - semaphore
@@ -56,6 +57,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${docker_volume_path}/{{ docker_app }}/letsencrypt:/letsencrypt
 networks:
+# BEGIN NETWORK RALLLY_NETWORK
+  rallly_network:
+    driver: bridge
+    internal: False
+    external: true
+# END NETWORK RALLLY_NETWORK
 # BEGIN NETWORK MUSIC_WEBSITE_NETWORK
   music_website_network:
     driver: bridge
